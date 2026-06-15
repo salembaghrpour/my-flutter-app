@@ -1,0 +1,35 @@
+name: customer_app
+description: "A new Flutter project."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+    
+  # بومی‌سازی و تقویم
+  flutter_localizations:
+    sdk: flutter
+    
+  # ارتباط با API سرور شخصی
+  http: ^1.2.0
+  
+  # مدیریت وضعیت و مسیریابی
+  get: ^4.6.6
+  
+  # مدیریت کش و ذخیره آفلاین اطلاعات
+  shared_preferences: ^2.2.2
+  web_socket_channel: ^3.0.3
+  
+  # نوتیفیکیشن‌های محلی
+  flutter_local_notifications: ^17.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
