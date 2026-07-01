@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../core/constants.dart';
+import '../constants/api_constants.dart'; // اصلاح شد
 import '../services/chat_service.dart';
 import 'auth_controller.dart';
 
@@ -21,39 +21,79 @@ class ChatController extends GetxController {
   void onInit() {
     super.onInit();
     final authController = Get.find<AuthController>();
-    customerId = authController.profileId.value;
-    _initChat();
+
+    // بررسی می‌کنیم که آیا profileId از قبل آماده است یا خیر
+    if (authController.profileId.value.isNotEmpty) {
+      // حالت اول: profileId آماده است
+      customerId = authController.profileId.value;
+      _initChat();
+    } else {
+      // حالت دوم: profileId هنوز در حال خوانده شدن از حافظه است
+      once(
+        authController.profileId,
+        (String pId) {
+          customerId = pId;
+          _initChat();
+        },
+        condition: () => authController.profileId.value.isNotEmpty,
+      );
+    }
   }
 
   Future<void> _initChat() async {
     isLoading.value = true;
     
-    // گرفتن تعداد پیام‌های نخوانده در زمان بالا آمدن اپلیکیشن
-    await _fetchInitialUnreadCount();
-    
-    final history = await ChatService.getChatHistory(customerId);
-    messages.assignAll(history);
-    isLoading.value = false;
-    _connectWebSocket();
-  }
-
-  // ---- تابع جدید برای دریافت پیام‌های نخوانده از دیتابیس ----
-  Future<void> _fetchInitialUnreadCount() async {
     try {
-      final url = Uri.parse('${AppConstants.apiBaseUrl}/api/chat/unread_count/$customerId');
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        unreadCount.value = data['unread_count'] ?? 0;
-      }
+      // ۱. ابتدا تاریخچه پیام‌ها را دریافت می‌کنیم
+      final history = await ChatService.getChatHistory(customerId, 'customer');
+      messages.assignAll(history);
+      
+      // ۲. محاسبه تعداد پیام‌های نخوانده از روی تاریخچه پیام‌ها
+      _calculateInitialUnreadCount();
+      
     } catch (e) {
-      print("خطا در دریافت تعداد پیام‌های نخوانده: $e");
+      print("Error fetching chat history: $e");
+    } finally {
+      isLoading.value = false;
+      // ۳. در نهایت وب‌سوکت را متصل می‌کنیم
+      _connectWebSocket();
     }
   }
-  // ------------------------------------------------------------
+
+  // ---- تابع جدید برای شمارش پیام‌های نخوانده از روی لیست موجود ----
+  void _calculateInitialUnreadCount() {
+    try {
+      int count = 0;
+      for (var message in messages) {
+        // دریافت وضعیت خوانده شدن
+        bool isRead = false;
+        if (message.containsKey('is_read')) {
+          var readVal = message['is_read'];
+          if (readVal is bool) {
+            isRead = readVal;
+          } else if (readVal is int) {
+            isRead = readVal == 1; // در برخی دیتابیس‌ها به شکل 0 و 1 می‌آید
+          }
+        }
+        
+        // پیدا کردن فرستنده پیام
+        String sender = message['sender_type'] ?? message['sender'] ?? 'admin';
+        
+        // اگر پیام خوانده نشده و فرستنده مشتری نیست (پیام از سمت پشتیبانی است)
+        if (!isRead && sender != 'customer') {
+          count++;
+        }
+      }
+      
+      unreadCount.value = count;
+    } catch (e) {
+      print("خطا در محاسبه تعداد پیام‌های نخوانده: $e");
+    }
+  }
+  // ------------------------------------------------------------------
 
   void _connectWebSocket() {
-    final wsUrl = '${AppConstants.wsBaseUrl}/api/chat/ws/customer/$customerId';
+    final wsUrl = '${ApiConstants.wsUrl}/api/chat/ws/customer/$customerId'; // اصلاح شد
     _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
     isConnected.value = true;
 
@@ -110,35 +150,49 @@ class ChatController extends GetxController {
     });
 
     try {
-      final url = Uri.parse('${AppConstants.apiBaseUrl}/api/chat/send');
+      final url = Uri.parse('${ApiConstants.baseUrl}/api/chat/send'); // اصلاح شد
       await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
+          "user_type": "customer",
           "sender_type": "customer",
           "content": text,
-          "customer_id": customerId,
+          "user_id": customerId,
         }),
       );
     } catch (e) {
-      print("خطای ارتباط: $e");
+      print("خطای ارتباط در ارسال پیام: $e");
     }
   }
 
   Future<void> markAsRead() async {
+    // ۱. صفر کردن شمارنده
     unreadCount.value = 0;
+    
+    // ۲. به‌روزرسانی وضعیت پیام‌ها در لیست محلی تا با باز و بسته کردن دوباره نشمارد
+    for (var i = 0; i < messages.length; i++) {
+      String sender = messages[i]['sender_type'] ?? messages[i]['sender'] ?? 'admin';
+      if (sender != 'customer') {
+        messages[i]['is_read'] = true;
+      }
+    }
+    messages.refresh();
+
+    // ۳. ارسال درخواست به سرور
     try {
-      final url = Uri.parse('${AppConstants.apiBaseUrl}/api/chat/read_messages');
+      final url = Uri.parse('${ApiConstants.baseUrl}/api/chat/read_messages'); // اصلاح شد
       await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          "customer_id": customerId,
+          "user_id": customerId,
+          "user_type": "customer",
           "reader_type": "customer",
         }),
       );
     } catch (e) {
-      print("خطا در ارسال وضعیت خوانده شده: $e");
+      print("خطا در ارسال وضعیت خوانده شده به سرور: $e");
     }
   }
 

@@ -1,41 +1,34 @@
-// lib/controllers/auth_controller.dart
+// D:\accounting_Arya\mobile_app\customer_app\lib\controllers\auth_controller.dart
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
+import '../services/storage_service.dart';
 
 class AuthController extends GetxController {
   var isLoading = false.obs;
   var token = ''.obs;
   var userId = ''.obs; 
   var profileId = ''.obs;
-  
-  // متغیر برای نگهداری نام مشتری جهت نمایش در هدر
   var userName = ''.obs; 
 
   bool get isLoggedIn => token.value.isNotEmpty;
 
   final AuthService _authService = AuthService();
+  // دریافت نمونه‌ی ساخته شده از StorageService
+  final StorageService _storageService = Get.find<StorageService>();
 
   @override
   void onInit() {
     super.onInit();
-    _checkLoginStatus();
+    _loadUserDataFromStorage();
   }
 
-  Future<void> _checkLoginStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedToken = prefs.getString('token');
-    final savedUserId = prefs.getString('userId');
-    final savedProfileId = prefs.getString('profileId'); 
-    final savedUserName = prefs.getString('userName');
-
-    if (savedToken != null && savedToken.isNotEmpty) {
-      token.value = savedToken;
-      if (savedUserId != null) userId.value = savedUserId;
-      if (savedProfileId != null) profileId.value = savedProfileId;
-      if (savedUserName != null) userName.value = savedUserName;
-      
-      Get.offAllNamed('/main');
+  // بارگذاری داده‌ها از حافظه به متغیرهای کنترلر (در صورت لاگین بودن)
+  void _loadUserDataFromStorage() {
+    if (_storageService.isLoggedIn) {
+      token.value = _storageService.token!;
+      userId.value = _storageService.userId ?? '';
+      profileId.value = _storageService.profileId ?? '';
+      userName.value = _storageService.userName ?? '';
     }
   }
 
@@ -50,21 +43,23 @@ class AuthController extends GetxController {
       final user = await _authService.login(username, password);
       
       if (user != null) {
-        final prefs = await SharedPreferences.getInstance();
+        // ذخیره اصولی در حافظه گوشی توسط سرویس جدید
+        await _storageService.saveAuthData(
+          token: user.token,
+          userId: user.id.toString(),
+          profileId: user.profileId.toString(),
+          userName: user.username,
+        );
         
-        await prefs.setString('token', user.token);
-        await prefs.setString('userId', user.id.toString()); 
-        await prefs.setString('profileId', user.profileId.toString()); 
-        await prefs.setString('userName', user.username); // ذخیره نام مشتری در حافظه
-        
+        // بروزرسانی متغیرهای حافظه در جریان اجرا
         token.value = user.token;
         userId.value = user.id.toString();
         profileId.value = user.profileId.toString();
         userName.value = user.username;
 
+        // انتقال به صفحه اصلی
         Get.offAllNamed('/main');
         
-        // نمایش پیام خوش‌آمدگویی پس از ورود
         Get.snackbar(
           'ورود موفق',
           '${user.username} عزیز، خوش آمدید!',
@@ -82,17 +77,16 @@ class AuthController extends GetxController {
   }
 
   Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('token');
-    await prefs.remove('userId');
-    await prefs.remove('profileId');
-    await prefs.remove('userName');
+    // پاک کردن اطلاعات از حافظه دستگاه
+    await _storageService.clearAuthData();
     
+    // پاک کردن اطلاعات متغیرها
     token.value = '';
     userId.value = '';
     profileId.value = '';
     userName.value = '';
     
+    // بازگشت به صفحه لاگین
     Get.offAllNamed('/login');
   }
 }

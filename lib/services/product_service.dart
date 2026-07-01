@@ -1,12 +1,11 @@
-// lib/services/product_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/product.dart';
-import '../core/constants.dart';
+import '../constants/api_constants.dart'; // مسیر جدید وارد شد
 
 class ProductService {
   Future<List<Product>> fetchProducts() async {
-    final url = Uri.parse('${AppConstants.baseUrl}/api/products/');
+    final url = Uri.parse(ApiConstants.products); 
     
     final response = await http.get(url);
 
