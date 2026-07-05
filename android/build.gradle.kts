@@ -20,14 +20,12 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
-// قطعه کد اضافه شده برای حل مشکل namespace پکیج‌های قدیمی (مثل flutter_app_badger)
+// روش صحیح برای رفع مشکل namespace بدون تداخل با چرخه evaluate گریدل
 subprojects {
-    afterEvaluate {
-        if (project.plugins.hasPlugin("com.android.library")) {
-            project.extensions.configure<com.android.build.gradle.LibraryExtension>("android") {
-                if (namespace == null) {
-                    namespace = project.group.toString()
-                }
+    plugins.withId("com.android.library") {
+        project.extensions.configure<com.android.build.gradle.LibraryExtension>("android") {
+            if (namespace == null) {
+                namespace = project.group.toString()
             }
         }
     }
