@@ -7,7 +7,8 @@ plugins {
 
 android {
     namespace = "com.example.customer_app"
-    compileSdk = flutter.compileSdkVersion
+    // ارتقا به نسخه 34 برای پشتیبانی از پکیج نوتیفیکیشن
+    compileSdk = 34
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -26,8 +27,10 @@ android {
         applicationId = "com.example.customer_app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        
+        // تنظیم دستی روی 21 و 34 برای جلوگیری از خطای بیلد پکیج نوتیفیکیشن
+        minSdk = 21
+        targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

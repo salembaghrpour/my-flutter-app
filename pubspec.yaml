@@ -24,8 +24,15 @@ dependencies:
   shared_preferences: ^2.2.2
   web_socket_channel: ^3.0.3
   
-  # نوتیفیکیشن‌های محلی
+  # نوتیفیکیشن‌های محلی و بج آیکون
   flutter_local_notifications: ^17.1.2
+  flutter_app_badger: ^1.5.0
+
+  # بررسی نسخه فعلی نصب شده روی گوشی
+  package_info_plus: ^8.0.0
+  
+  # دانلود و نصب خودکار آپدیت
+  ota_update: 7.1.0
 
 dev_dependencies:
   flutter_test:

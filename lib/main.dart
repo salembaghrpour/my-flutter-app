@@ -8,10 +8,14 @@ import 'screens/login_screen.dart';
 import 'main_screen.dart';
 import 'services/storage_service.dart';
 import 'controllers/auth_controller.dart';
+import 'services/notification_service.dart'; // اضافه شدن سرویس نوتیفیکیشن
 
 void main() async {
   // اطمینان از مقداردهی اولیه ویجت‌ها در فلاتر
   WidgetsFlutterBinding.ensureInitialized();
+
+  // راه‌اندازی نوتیفیکیشن‌های محلی
+  await NotificationService.init();
 
   // ۱. راه‌اندازی StorageService قبل از اجرای اپلیکیشن
   await Get.putAsync(() => StorageService().init());

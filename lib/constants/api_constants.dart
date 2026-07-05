@@ -4,15 +4,11 @@ class ApiConstants {
   // نام اپلیکیشن (اضافه شد)
   static const String appName = 'فروشگاه من';
 
-  // آدرس پایه سرور (HTTP)
-  //static const String baseUrl = 'http://127.0.0.1:8000';
-   // آدرس پایه سرور (HTTP) با دامنه جدید
-  static const String baseUrl = 'http://app.koraarya.ir:8000';
+  // آدرس پایه سرور (HTTPS) - پورت 8000 حذف و http به https تبدیل شد
+  static const String baseUrl = 'https://app.koraarya.ir';
   
-  // آدرس پایه وب‌ساکت (WS)
- // static const String wsUrl = 'ws://127.0.0.1:8000';
-    // آدرس پایه وب‌ساکت (WS) با دامنه جدید
-  static const String wsUrl = 'ws://app.koraarya.ir:8000';
+  // آدرس پایه وب‌ساکت (WSS) - برای وب‌ساکت امن باید از wss استفاده کنید
+  static const String wsUrl = 'wss://app.koraarya.ir';
 
 
   // --- Endpoints ---
@@ -24,7 +20,6 @@ class ApiConstants {
   static const String products = '$baseUrl/api/products/';
 
   // Chat
-  // این تابع را بر اساس ساختار جدید (شامل user_type) اصلاح می‌کنیم
   static String chatHistory(String userType, String userId) => 
       '$baseUrl/api/chat/history/$userType/$userId';
   

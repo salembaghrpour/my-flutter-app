@@ -3,8 +3,9 @@ import 'package:get/get.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../constants/api_constants.dart'; // اصلاح شد
+import '../constants/api_constants.dart';
 import '../services/chat_service.dart';
+import '../services/notification_service.dart'; // اضافه شدن سرویس نوتیفیکیشن
 import 'auth_controller.dart';
 
 class ChatController extends GetxController {
@@ -22,13 +23,10 @@ class ChatController extends GetxController {
     super.onInit();
     final authController = Get.find<AuthController>();
 
-    // بررسی می‌کنیم که آیا profileId از قبل آماده است یا خیر
     if (authController.profileId.value.isNotEmpty) {
-      // حالت اول: profileId آماده است
       customerId = authController.profileId.value;
       _initChat();
     } else {
-      // حالت دوم: profileId هنوز در حال خوانده شدن از حافظه است
       once(
         authController.profileId,
         (String pId) {
@@ -42,58 +40,49 @@ class ChatController extends GetxController {
 
   Future<void> _initChat() async {
     isLoading.value = true;
-    
     try {
-      // ۱. ابتدا تاریخچه پیام‌ها را دریافت می‌کنیم
       final history = await ChatService.getChatHistory(customerId, 'customer');
       messages.assignAll(history);
       
-      // ۲. محاسبه تعداد پیام‌های نخوانده از روی تاریخچه پیام‌ها
       _calculateInitialUnreadCount();
-      
     } catch (e) {
       print("Error fetching chat history: $e");
     } finally {
       isLoading.value = false;
-      // ۳. در نهایت وب‌سوکت را متصل می‌کنیم
       _connectWebSocket();
     }
   }
 
-  // ---- تابع جدید برای شمارش پیام‌های نخوانده از روی لیست موجود ----
   void _calculateInitialUnreadCount() {
     try {
       int count = 0;
       for (var message in messages) {
-        // دریافت وضعیت خوانده شدن
         bool isRead = false;
         if (message.containsKey('is_read')) {
           var readVal = message['is_read'];
           if (readVal is bool) {
             isRead = readVal;
           } else if (readVal is int) {
-            isRead = readVal == 1; // در برخی دیتابیس‌ها به شکل 0 و 1 می‌آید
+            isRead = readVal == 1; 
           }
         }
         
-        // پیدا کردن فرستنده پیام
         String sender = message['sender_type'] ?? message['sender'] ?? 'admin';
-        
-        // اگر پیام خوانده نشده و فرستنده مشتری نیست (پیام از سمت پشتیبانی است)
         if (!isRead && sender != 'customer') {
           count++;
         }
       }
       
       unreadCount.value = count;
+      // آپدیت عدد روی آیکون اپ در ابتدای ورود
+      NotificationService.updateBadge(count); 
     } catch (e) {
       print("خطا در محاسبه تعداد پیام‌های نخوانده: $e");
     }
   }
-  // ------------------------------------------------------------------
 
   void _connectWebSocket() {
-    final wsUrl = '${ApiConstants.wsUrl}/api/chat/ws/customer/$customerId'; // اصلاح شد
+    final wsUrl = '${ApiConstants.wsUrl}/api/chat/ws/customer/$customerId';
     _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
     isConnected.value = true;
 
@@ -114,10 +103,11 @@ class ChatController extends GetxController {
         }
 
         final sender = decodedMessage['sender_type'] ?? "admin";
+        final textContent = decodedMessage['content'] ?? "";
         
         messages.add({
           "sender": sender,
-          "text": decodedMessage['content'] ?? "",
+          "text": textContent,
           "timestamp": decodedMessage['created_at'] ?? DateTime.now().toIso8601String(),
           "status": "sent",
           "is_read": false,
@@ -126,6 +116,15 @@ class ChatController extends GetxController {
         if (sender == "admin") {
           if (!isChatScreenOpen.value) {
             unreadCount.value++;
+            
+            // نمایش نوتیفیکیشن سیستم و آپدیت عدد آیکون
+            NotificationService.showNotification(
+              id: DateTime.now().millisecondsSinceEpoch ~/ 1000, 
+              title: 'پیام جدید از پشتیبانی', 
+              body: textContent
+            );
+            NotificationService.updateBadge(unreadCount.value);
+            
           } else {
             markAsRead();
           }
@@ -150,7 +149,7 @@ class ChatController extends GetxController {
     });
 
     try {
-      final url = Uri.parse('${ApiConstants.baseUrl}/api/chat/send'); // اصلاح شد
+      final url = Uri.parse('${ApiConstants.baseUrl}/api/chat/send');
       await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -167,10 +166,11 @@ class ChatController extends GetxController {
   }
 
   Future<void> markAsRead() async {
-    // ۱. صفر کردن شمارنده
     unreadCount.value = 0;
     
-    // ۲. به‌روزرسانی وضعیت پیام‌ها در لیست محلی تا با باز و بسته کردن دوباره نشمارد
+    // پاک کردن عدد از روی آیکون برنامه
+    NotificationService.clearBadge();
+    
     for (var i = 0; i < messages.length; i++) {
       String sender = messages[i]['sender_type'] ?? messages[i]['sender'] ?? 'admin';
       if (sender != 'customer') {
@@ -179,9 +179,8 @@ class ChatController extends GetxController {
     }
     messages.refresh();
 
-    // ۳. ارسال درخواست به سرور
     try {
-      final url = Uri.parse('${ApiConstants.baseUrl}/api/chat/read_messages'); // اصلاح شد
+      final url = Uri.parse('${ApiConstants.baseUrl}/api/chat/read_messages');
       await http.post(
         url,
         headers: {'Content-Type': 'application/json'},

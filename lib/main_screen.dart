@@ -7,6 +7,7 @@ import 'screens/support_chat_screen.dart';
 import 'controllers/cart_controller.dart'; 
 import 'controllers/auth_controller.dart';
 import 'controllers/chat_controller.dart';
+import 'services/update_service.dart'; // <--- اضافه شدن ایمپورت سرویس آپدیت
 
 class UIController extends GetxController {
   var showImages = false.obs;
@@ -43,6 +44,15 @@ class _MainScreenState extends State<MainScreen> {
     const Center(child: Text('سفارشات من (به زودی)')),
     SupportChatScreen(customerId: authController.profileId.value), 
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // فراخوانی متد بررسی آپدیت بلافاصله بعد از ساخته شدن صفحه
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      UpdateService.checkForUpdate(context);
+    });
+  }
 
   void _onItemTapped(int index) {
     setState(() {
