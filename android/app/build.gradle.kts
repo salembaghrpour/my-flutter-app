@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.customer_app"
-    // ارتقا به نسخه 34 برای پشتیبانی از پکیج نوتیفیکیشن
+    // ارتقا به نسخه 35 برای پشتیبانی از پکیج نوتیفیکیشن و سایر پکیج‌های جدید
     compileSdk = 35
     ndkVersion = flutter.ndkVersion
 
@@ -48,7 +48,7 @@ flutter {
     source = "../.."
 }
 
-// این بلاک برای اضافه کردن کتابخانه Desugaring اضافه شد
+// این بلاک برای اضافه کردن کتابخانه Desugaring اضافه شد و به 2.1.4 آپدیت شد
 dependencies {
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
