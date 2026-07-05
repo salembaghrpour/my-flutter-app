@@ -15,8 +15,22 @@ subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
+
 subprojects {
     project.evaluationDependsOn(":app")
+}
+
+// قطعه کد اضافه شده برای حل مشکل namespace پکیج‌های قدیمی (مثل flutter_app_badger)
+subprojects {
+    afterEvaluate {
+        if (project.plugins.hasPlugin("com.android.library")) {
+            project.extensions.configure<com.android.build.gradle.LibraryExtension>("android") {
+                if (namespace == null) {
+                    namespace = project.group.toString()
+                }
+            }
+        }
+    }
 }
 
 tasks.register<Delete>("clean") {
