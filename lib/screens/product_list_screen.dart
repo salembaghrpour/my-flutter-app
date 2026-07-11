@@ -16,7 +16,7 @@ class ProductListScreen extends StatefulWidget {
 
 class _ProductListScreenState extends State<ProductListScreen> {
   final CartController cartController = Get.find<CartController>(); 
-  final UIController uiController = Get.find<UIController>(); // اتصال به کنترلر نمایش عکس
+  final UIController uiController = Get.find<UIController>();
   final ProductService _productService = ProductService();
   final TextEditingController _searchController = TextEditingController();
   
@@ -38,6 +38,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
   }
 
   Future<void> _fetchProducts() async {
+    setState(() {
+      _isLoading = true;
+    });
     try {
       final data = await _productService.fetchProducts();
       setState(() {
@@ -69,7 +72,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // فقط بخش جستجو باقی ماند
         Padding(
           padding: const EdgeInsets.all(12.0),
           child: TextField(
@@ -89,15 +91,37 @@ class _ProductListScreenState extends State<ProductListScreen> {
           ),
         ),
         
-        // لیست محصولات حساس به تغییرات UIController
         Expanded(
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())
-              : _filteredProducts.isEmpty
-                  ? const Center(child: Text('محصولی یافت نشد.'))
-                  : Obx(() => uiController.showImages.value 
-                      ? _buildGridView() // نمایش گرید با عکس
-                      : _buildListView()), // نمایش لیست بدون عکس
+              : RefreshIndicator(
+                  onRefresh: _fetchProducts,
+                  child: _filteredProducts.isEmpty
+                      ? SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: Container(
+                            height: MediaQuery.of(context).size.height * 0.6,
+                            alignment: Alignment.center,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.cloud_off, size: 64, color: Colors.grey),
+                                const SizedBox(height: 16),
+                                const Text('محصولی یافت نشد یا دیتابیس آفلاین خالی است.'),
+                                const SizedBox(height: 16),
+                                ElevatedButton.icon(
+                                  onPressed: _fetchProducts,
+                                  icon: const Icon(Icons.refresh),
+                                  label: const Text('تلاش مجدد / بروزرسانی'),
+                                )
+                              ],
+                            ),
+                          ),
+                        )
+                      : Obx(() => uiController.showImages.value 
+                          ? _buildGridView() 
+                          : _buildListView()),
+                ),
         ),
       ],
     );
@@ -107,9 +131,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
       child: GridView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          childAspectRatio: 0.70, // کمی فضای بیشتر برای متون و دکمه‌ها
+          childAspectRatio: 0.70,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
         ),
@@ -127,6 +152,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
   Widget _buildListView() {
     return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.only(bottom: 16.0),
       itemCount: _filteredProducts.length,
       itemBuilder: (context, index) {

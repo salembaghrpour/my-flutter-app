@@ -3,9 +3,13 @@ import 'package:get/get.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:async';
 import '../constants/api_constants.dart';
 import '../services/chat_service.dart';
-import '../services/notification_service.dart'; // اضافه شدن سرویس نوتیفیکیشن
+import '../services/notification_service.dart';
+import '../services/local_db/chat_local_repository.dart';
+import '../services/connectivity_service.dart';
+import '../models/local/chat_message_local.dart';
 import 'auth_controller.dart';
 
 class ChatController extends GetxController {
@@ -14,13 +18,29 @@ class ChatController extends GetxController {
   var isConnected = false.obs;
   var isLoading = true.obs;
   var isChatScreenOpen = false.obs;
-  
+
+  final ChatLocalRepository _localRepo = ChatLocalRepository();
+  late ConnectivityService _connectivityService;
+  late ChatService _chatService;
   WebSocketChannel? _channel;
+  StreamSubscription? _wsSubscription;
   late String customerId;
 
   @override
   void onInit() {
     super.onInit();
+    _connectivityService = Get.find<ConnectivityService>();
+    _chatService = Get.find<ChatService>();
+
+    isConnected.bindStream(_connectivityService.isConnected.stream);
+
+    ever(isConnected, (bool connected) {
+      if (connected && customerId.isNotEmpty) {
+        _syncOfflineMessages();
+        _pullServerMessages();
+      }
+    });
+
     final authController = Get.find<AuthController>();
 
     if (authController.profileId.value.isNotEmpty) {
@@ -41,9 +61,11 @@ class ChatController extends GetxController {
   Future<void> _initChat() async {
     isLoading.value = true;
     try {
-      final history = await ChatService.getChatHistory(customerId, 'customer');
-      messages.assignAll(history);
-      
+      if (_connectivityService.isConnected.value) {
+        await _pullServerMessages();
+      } else {
+        await _loadMessagesFromLocal();
+      }
       _calculateInitialUnreadCount();
     } catch (e) {
       print("Error fetching chat history: $e");
@@ -53,124 +75,320 @@ class ChatController extends GetxController {
     }
   }
 
+  Future<void> _pullServerMessages() async {
+    try {
+      final history = await _chatService.getChatHistory(customerId, 'customer');
+      final localMsgs = await _localRepo.getMessagesByConversation(customerId);
+
+      final existingServerIds = localMsgs
+          .map((m) => m.serverId)
+          .where((id) => id != null)
+          .toSet();
+
+      bool needsUiUpdate = false;
+
+      for (var msgData in history) {
+        // تغییر مهم ۱: چک کردن هم id و هم server_id
+        final sId = msgData['server_id']?.toString() ?? msgData['id']?.toString();
+        
+        // تغییر مهم ۲: بررسی دقیق تر بولین و عدد برای وضعیت خوانده شدن
+        bool isReadOnServer = msgData['is_read'] == true || 
+                              msgData['is_read'] == 1 || 
+                              msgData['is_read'] == 'true' || 
+                              msgData['is_read'] == '1';
+
+        if (sId != null && !existingServerIds.contains(sId)) {
+          // اضافه کردن پیام جدید به دیتابیس
+          final newLocalMsg = ChatMessageLocal(
+            serverId: sId,
+            conversationId: customerId,
+            senderType: msgData['sender'] ?? 'admin',
+            content: msgData['text'] ?? '',
+            createdAt: msgData['timestamp'] ?? DateTime.now().toIso8601String(),
+            isSynced: true,
+            isRead: isReadOnServer,
+          );
+          await _localRepo.saveMessage(newLocalMsg);
+          needsUiUpdate = true;
+        } else if (sId != null) {
+          // آپدیت وضعیت خوانده شدن پیام‌های موجود در گوشی با سرور
+          final existingMsgs = localMsgs.where((m) => m.serverId == sId);
+          if (existingMsgs.isNotEmpty) {
+            final msg = existingMsgs.first;
+            // اگر در گوشی نخوانده است اما در سرور خوانده شده
+            if (!msg.isRead && isReadOnServer) {
+              msg.isRead = true;
+              await msg.save();
+              needsUiUpdate = true;
+            }
+          }
+        }
+      }
+
+      // فقط اگر تغییری در دیتابیس داشتیم لیست UI را دوباره می‌سازیم
+      if (needsUiUpdate || messages.isEmpty) {
+        await _loadMessagesFromLocal();
+      }
+    } catch (e) {
+      print("Error pulling server messages: $e");
+    }
+  }
+
+  Future<void> _loadMessagesFromLocal() async {
+    final localMsgs = await _localRepo.getMessagesByConversation(customerId);
+    localMsgs.sort((a, b) => (a.createdAt).compareTo(b.createdAt));
+    _assignLocalMessages(localMsgs);
+  }
+
+  void _assignLocalMessages(List<ChatMessageLocal> localMsgs) {
+    var mappedList = localMsgs.map((m) {
+      return {
+        "local_id": m.localId,
+        "server_id": m.serverId,
+        "sender": m.senderType,
+        "text": m.content,
+        "timestamp": m.createdAt,
+        // اگر سینک نشده offline، اگر خوانده شده read، در غیر این صورت sent
+        "status": !m.isSynced ? "offline" : (m.isRead ? "read" : "sent"),
+        "is_read": m.isRead,
+      };
+    }).toList();
+    
+    // جایگزینی کامل لیست برای تریگر شدن GetX
+    messages.assignAll(mappedList);
+  }
+
+  Future<void> _syncOfflineMessages() async {
+    try {
+      final localMsgs = await _localRepo.getMessagesByConversation(customerId);
+      final unsyncedMsgs = localMsgs.where((m) => !m.isSynced).toList();
+
+      for (var msg in unsyncedMsgs) {
+        await Future.delayed(const Duration(milliseconds: 300));
+        if (msg.localId != null) {
+          _updateMessageStatusUI(msg.localId, "sending");
+
+          final response = await _chatService.sendMessageToServer(msg);
+          if (response != null && response['success'] == true) {
+            await _localRepo.markAsSynced(msg.localId!, response['server_id']?.toString() ?? '');
+            _updateMessageStatusUI(msg.localId, "sent");
+          } else {
+            _updateMessageStatusUI(msg.localId, "offline");
+          }
+        }
+      }
+    } catch (e) {
+      print("Error syncing offline messages: $e");
+    }
+  }
+
   void _calculateInitialUnreadCount() {
     try {
       int count = 0;
       for (var message in messages) {
-        bool isRead = false;
-        if (message.containsKey('is_read')) {
-          var readVal = message['is_read'];
-          if (readVal is bool) {
-            isRead = readVal;
-          } else if (readVal is int) {
-            isRead = readVal == 1; 
-          }
-        }
-        
+        bool isRead = message['is_read'] == true || message['is_read'] == 1;
         String sender = message['sender_type'] ?? message['sender'] ?? 'admin';
         if (!isRead && sender != 'customer') {
           count++;
         }
       }
-      
       unreadCount.value = count;
-      // آپدیت عدد روی آیکون اپ در ابتدای ورود
-      NotificationService.updateBadge(count); 
+      NotificationService.updateBadge(count);
     } catch (e) {
       print("خطا در محاسبه تعداد پیام‌های نخوانده: $e");
     }
   }
 
   void _connectWebSocket() {
+    if (customerId.isEmpty) return;
+
     final wsUrl = '${ApiConstants.wsUrl}/api/chat/ws/customer/$customerId';
-    _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
-    isConnected.value = true;
+    
+    try {
+      _wsSubscription?.cancel();
+      _channel?.sink.close();
 
-    _channel!.stream.listen((message) {
-      try {
-        final decodedMessage = jsonDecode(message);
-        final msgType = decodedMessage['type'] ?? "new_message";
+      _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
+      isConnected.value = true;
 
-        if (msgType == "read_receipt") {
-          for (var i = 0; i < messages.length; i++) {
-            if (messages[i]['sender'] == "customer") {
-              messages[i]['is_read'] = true;
-              messages[i]['status'] = "read";
+      _wsSubscription = _channel!.stream.listen((message) async {
+        try {
+          // تغییر مهم ۳: لاگ کردن دیتای دریافتی برای خطایابی (حتما در کنسول چک کنید)
+          print("🌐 WEBSOCKET RECEIVED: $message");
+          
+          final decodedMessage = jsonDecode(message);
+          
+          if (decodedMessage['type'] == "read_receipt") {
+            _handleReadReceipt();
+            return;
+          }
+
+          final sender = decodedMessage['sender_type'] ?? "admin";
+          final textContent = decodedMessage['content'] ?? "";
+          final timestamp = decodedMessage['created_at'] ?? DateTime.now().toIso8601String();
+          final serverId = decodedMessage['id']?.toString();
+
+          bool alreadyExistsInUI = messages.any((m) => 
+            (m['server_id'] != null && m['server_id'] == serverId) || 
+            (m['text'] == textContent && m['sender'] == sender && m['timestamp'] == timestamp)
+          );
+
+          if (alreadyExistsInUI) return;
+
+          final localMsgs = await _localRepo.getMessagesByConversation(customerId);
+          bool alreadyExistsInDb = localMsgs.any((m) => 
+             (serverId != null && m.serverId == serverId) || 
+             (m.content == textContent && m.senderType == sender && m.createdAt == timestamp)
+          );
+
+          if (!alreadyExistsInDb) {
+            await _localRepo.saveMessage(ChatMessageLocal(
+               serverId: serverId,
+               conversationId: customerId,
+               senderType: sender,
+               content: textContent,
+               createdAt: timestamp,
+               isSynced: true,
+               isRead: isChatScreenOpen.value,
+            ));
+          }
+
+          final newMessage = {
+            "server_id": serverId,
+            "sender": sender,
+            "text": textContent,
+            "timestamp": timestamp,
+            "status": "sent",
+            "is_read": isChatScreenOpen.value,
+          };
+          messages.add(newMessage);
+
+          if (sender == "admin") {
+            if (!isChatScreenOpen.value) {
+              unreadCount.value++;
+              NotificationService.showNotification(
+                id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+                title: 'پیام جدید از پشتیبانی',
+                body: textContent
+              );
+              NotificationService.updateBadge(unreadCount.value);
+            } else {
+              markAsRead();
             }
           }
-          messages.refresh();
-          return;
+        } catch (e) {
+          print("WS Message Parsing Error: $e");
         }
-
-        final sender = decodedMessage['sender_type'] ?? "admin";
-        final textContent = decodedMessage['content'] ?? "";
-        
-        messages.add({
-          "sender": sender,
-          "text": textContent,
-          "timestamp": decodedMessage['created_at'] ?? DateTime.now().toIso8601String(),
-          "status": "sent",
-          "is_read": false,
-        });
-
-        if (sender == "admin") {
-          if (!isChatScreenOpen.value) {
-            unreadCount.value++;
-            
-            // نمایش نوتیفیکیشن سیستم و آپدیت عدد آیکون
-            NotificationService.showNotification(
-              id: DateTime.now().millisecondsSinceEpoch ~/ 1000, 
-              title: 'پیام جدید از پشتیبانی', 
-              body: textContent
-            );
-            NotificationService.updateBadge(unreadCount.value);
-            
-          } else {
-            markAsRead();
-          }
-        }
-      } catch (e) {
+      }, onDone: () {
+        isConnected.value = false;
+        _reconnectWebSocket();
+      }, onError: (e) {
+        isConnected.value = false;
         print("WS Error: $e");
+      });
+    } catch (e) {
+      isConnected.value = false;
+      print("WS Connection Error: $e");
+    }
+  }
+
+  void _reconnectWebSocket() {
+    Future.delayed(const Duration(seconds: 5), () {
+      if (!isConnected.value && !isClosed) {
+        _connectWebSocket();
       }
-    }, onDone: () {
-      isConnected.value = false;
-    }, onError: (e) {
-      isConnected.value = false;
     });
   }
 
+  void _handleReadReceipt() async {
+    print("✅ RUNNING _handleReadReceipt: Updating UI and DB to read");
+    bool updated = false;
+    
+    // یک کپی از لیست می‌گیریم تا موقع تغییر، GetX دقیق‌تر متوجه شود
+    var tempList = List<Map<String, dynamic>>.from(messages);
+
+    for (var i = 0; i < tempList.length; i++) {
+      if (tempList[i]['sender'] == "customer") {
+        if (tempList[i]['is_read'] != true) {
+          tempList[i]['is_read'] = true;
+          tempList[i]['status'] = "read";
+          updated = true;
+        }
+      }
+    }
+    
+    if (updated) {
+      messages.assignAll(tempList); // استفاده از assignAll برای اعمال قطعی تغییرات در UI
+    }
+    
+    // ثبت تیک‌های آبی پیام‌های ما در دیتابیس لوکال
+    await _localRepo.markAllCustomerMessagesAsRead(customerId);
+  }
+
   Future<void> sendMessage(String text) async {
-    messages.add({
+    final timestamp = DateTime.now().toIso8601String();
+
+    final localMsg = ChatMessageLocal(
+      conversationId: customerId,
+      senderType: 'customer',
+      content: text,
+      createdAt: timestamp,
+      isSynced: false,
+    );
+
+    final localId = await _localRepo.saveMessage(localMsg);
+
+    final tempMessage = {
+      "local_id": localId,
       "sender": "customer",
       "text": text,
-      "timestamp": DateTime.now().toIso8601String(),
-      "status": "sent",
+      "timestamp": timestamp,
+      "status": "sending",
       "is_read": false
-    });
+    };
+    messages.add(tempMessage);
 
-    try {
-      final url = Uri.parse('${ApiConstants.baseUrl}/api/chat/send');
-      await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          "user_type": "customer",
-          "sender_type": "customer",
-          "content": text,
-          "user_id": customerId,
-        }),
-      );
-    } catch (e) {
-      print("خطای ارتباط در ارسال پیام: $e");
+    if (_connectivityService.isConnected.value) {
+      try {
+        localMsg.localId = localId;
+
+        final response = await _chatService.sendMessageToServer(localMsg);
+
+        if (response != null && response['success'] == true) {
+          await _localRepo.markAsSynced(localId, response['server_id']?.toString() ?? '');
+          _updateMessageStatusUI(localId, "sent");
+          
+          int index = messages.indexWhere((m) => m['local_id'] == localId);
+          if (index != -1) {
+            messages[index]['server_id'] = response['server_id']?.toString();
+            messages.refresh();
+          }
+        } else {
+          _updateMessageStatusUI(localId, "offline");
+        }
+      } catch (e) {
+        _updateMessageStatusUI(localId, "offline");
+      }
+    } else {
+      _updateMessageStatusUI(localId, "offline");
+    }
+  }
+
+  void _updateMessageStatusUI(dynamic localId, String status) {
+    int index = messages.indexWhere((m) => m['local_id'] == localId);
+    if (index != -1) {
+      messages[index]['status'] = status;
+      if (status == 'read') {
+        messages[index]['is_read'] = true;
+      }
+      messages.refresh();
     }
   }
 
   Future<void> markAsRead() async {
     unreadCount.value = 0;
-    
-    // پاک کردن عدد از روی آیکون برنامه
     NotificationService.clearBadge();
-    
+
     for (var i = 0; i < messages.length; i++) {
       String sender = messages[i]['sender_type'] ?? messages[i]['sender'] ?? 'admin';
       if (sender != 'customer') {
@@ -178,25 +396,30 @@ class ChatController extends GetxController {
       }
     }
     messages.refresh();
+    
+    // ثبت خوانده شدن پیام‌های ادمین در دیتابیس لوکال
+    await _localRepo.markAdminMessagesAsRead(customerId);
 
-    try {
-      final url = Uri.parse('${ApiConstants.baseUrl}/api/chat/read_messages');
-      await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          "user_id": customerId,
-          "user_type": "customer",
-          "reader_type": "customer",
-        }),
-      );
-    } catch (e) {
-      print("خطا در ارسال وضعیت خوانده شده به سرور: $e");
+    if (_connectivityService.isConnected.value) {
+      try {
+        await http.post(
+          Uri.parse('${ApiConstants.baseUrl}/api/chat/read_messages'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            "user_id": customerId,
+            "user_type": "customer",
+            "reader_type": "customer",
+          }),
+        );
+      } catch (e) {
+        print("Error marking as read: $e");
+      }
     }
   }
 
   @override
   void onClose() {
+    _wsSubscription?.cancel();
     _channel?.sink.close();
     super.onClose();
   }

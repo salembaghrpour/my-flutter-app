@@ -1,30 +1,43 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import 'controllers/chat_controller.dart';
-import 'constants/api_constants.dart'; // اصلاح شد
+import 'constants/api_constants.dart';
 import 'screens/product_list_screen.dart';
 import 'screens/login_screen.dart';
 import 'main_screen.dart';
 import 'services/storage_service.dart';
 import 'controllers/auth_controller.dart';
-import 'services/notification_service.dart'; // اضافه شدن سرویس نوتیفیکیشن
+import 'services/notification_service.dart';
+import 'services/connectivity_service.dart';
+import 'services/chat_service.dart';
+import 'services/sync/chat_sync_service.dart';
+import 'services/order_sync_service.dart'; 
+import 'core/local/db/app_database.dart'; 
 
 void main() async {
-  // اطمینان از مقداردهی اولیه ویجت‌ها در فلاتر
   WidgetsFlutterBinding.ensureInitialized();
 
-  // راه‌اندازی نوتیفیکیشن‌های محلی
+  // --- تنظیمات دیتابیس‌های محلی (Drift و Hive) ---
+  await AppDatabase.initializeLocalDatabases();
+  // --------------------
+
   await NotificationService.init();
+  
+  // فراخوانی درخواست دسترسی نوتیفیکیشن در زمان باز شدن اپ
+  await NotificationService.requestPermission();
 
-  // ۱. راه‌اندازی StorageService قبل از اجرای اپلیکیشن
   await Get.putAsync(() => StorageService().init());
+  
+  // ترتیب مهم است: سرویس‌های پایه، بعد سرویس‌های همگام‌سازی
+  Get.put(ChatService());
+  Get.put(ConnectivityService(), permanent: true);
+  Get.put(ChatSyncService(), permanent: true);
+  // ثبت سرویس همگام‌سازی سفارشات برای اجرای خودکار پس از اتصال
+  Get.put(OrderSyncService(), permanent: true); 
 
-  // ۲. ایجاد کنترلر AuthController در مموری برای لاگین
   Get.put(AuthController());
-
-  // ۳. ایجاد ChatController به صورت دائمی (permanent)
-  // این کنترلر از ابتدا آماده خواهد بود و با تغییرات لاگین، وب‌سوکت را مقداردهی می‌کند
   Get.put(ChatController(), permanent: true);
 
   runApp(const MyApp());
@@ -35,35 +48,16 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // خواندن وضعیت لاگین از سرویس برای تعیین صفحه شروع
     final storageService = Get.find<StorageService>();
     final String initialRoute = storageService.isLoggedIn ? '/main' : '/login';
 
     return GetMaterialApp(
-      title: ApiConstants.appName, // اصلاح شد
+      title: ApiConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1E3A8A), // سرمه‌ای
-          primary: const Color(0xFF1E3A8A),
-          secondary: const Color(0xFFF59E0B), // طلایی/نارنجی
-          surface: const Color(0xFFF3F4F6), // رنگ پس‌زمینه
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E3A8A)),
         useMaterial3: true,
-        fontFamily: 'Tahoma',
-        appBarTheme: const AppBarTheme(
-          centerTitle: true,
-          elevation: 0,
-          backgroundColor: Color(0xFF1E3A8A),
-          foregroundColor: Colors.white, 
-        ),
-        cardTheme: CardThemeData(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 4,
-          shadowColor: Colors.black.withOpacity(0.2),
-        ),
+        fontFamily: 'Tahoma', 
       ),
       initialRoute: initialRoute, 
       getPages: [

@@ -1,13 +1,15 @@
 // lib/main_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'screens/product_list_screen.dart';
 import 'screens/cart_screen.dart'; 
 import 'screens/support_chat_screen.dart'; 
+import 'screens/settings_screen.dart'; // <--- اضافه شدن ایمپورت صفحه تنظیمات
 import 'controllers/cart_controller.dart'; 
 import 'controllers/auth_controller.dart';
 import 'controllers/chat_controller.dart';
-import 'services/update_service.dart'; // <--- اضافه شدن ایمپورت سرویس آپدیت
+import 'services/update_service.dart';
 
 class UIController extends GetxController {
   var showImages = false.obs;
@@ -64,20 +66,49 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
+  // <--- متد نمایش دیالوگ ورژن --->
+  void _showVersionDialog() async {
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    String version = packageInfo.version;
+    String buildNumber = packageInfo.buildNumber;
+    
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('درباره اپلیکیشن', textAlign: TextAlign.center),
+          content: Text('نسخه: $version\nبیلد: $buildNumber', textAlign: TextAlign.center, style: const TextStyle(fontSize: 16)),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('بستن'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.amber, // <--- رنگ طلایی برای تایتل بار
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Text(_pageTitles[_selectedIndex], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                Text(
+                  _pageTitles[_selectedIndex], 
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black87) // رنگ تیره برای وضوح
+                ),
                 const SizedBox(width: 8),
                 Obx(() => Text(
                   'سلام، ${authController.userName.value}',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.normal, color: Colors.white70),
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87), // رنگ تیره برای وضوح
                 )),
               ],
             ),
@@ -87,23 +118,40 @@ class _MainScreenState extends State<MainScreen> {
                 children: [
                   Icon(
                     chatController.isConnected.value ? Icons.circle : Icons.circle_outlined, 
-                    color: chatController.isConnected.value ? Colors.greenAccent : Colors.redAccent, 
+                    color: chatController.isConnected.value ? Colors.green.shade800 : Colors.red.shade800, 
                     size: 10
                   ),
                   const SizedBox(width: 4),
                   Text(
                     chatController.isConnected.value ? 'آنلاین' : 'درحال اتصال...', 
-                    style: const TextStyle(fontSize: 11, color: Colors.white70)
+                    style: const TextStyle(fontSize: 11, color: Colors.black54)
                   ),
                 ],
               )),
           ],
         ),
         actions: [
+          // <--- دکمه جدید برای ورود به صفحه تنظیمات --->
+          IconButton(
+            icon: const Icon(Icons.settings, color: Colors.black87),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
+            },
+            tooltip: 'تنظیمات',
+          ),
+          // <--- دکمه نمایش ورژن --->
+          IconButton(
+            icon: const Icon(Icons.info_outline, color: Colors.black87),
+            onPressed: _showVersionDialog,
+            tooltip: 'نسخه اپلیکیشن',
+          ),
           Obx(() => IconButton(
             icon: Icon(
               uiController.showImages.value ? Icons.visibility : Icons.visibility_off,
-              color: Theme.of(context).colorScheme.secondary, 
+              color: Colors.black87, 
             ),
             onPressed: () => uiController.toggleImages(),
             tooltip: 'نمایش/مخفی کردن تصاویر کالا',
@@ -112,7 +160,7 @@ class _MainScreenState extends State<MainScreen> {
             alignment: Alignment.center,
             children: [
               IconButton(
-                icon: const Icon(Icons.shopping_cart),
+                icon: const Icon(Icons.shopping_cart, color: Colors.black87),
                 onPressed: () {
                   setState(() {
                     _selectedIndex = 1; 
@@ -126,13 +174,13 @@ class _MainScreenState extends State<MainScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.secondary,
+                      color: Colors.red, // رنگ قرمز برای بج روی پس‌زمینه طلایی بهتر دیده می‌شود
                       borderRadius: BorderRadius.circular(10),
                     ),
                     constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
                     child: Text(
                       '${cartController.totalItemsCount}',
-                      style: const TextStyle(color: Colors.white, fontSize: 10),
+                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -140,7 +188,7 @@ class _MainScreenState extends State<MainScreen> {
             ],
           )),
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout, color: Colors.black87),
             onPressed: () => authController.logout(),
           ),
         ],

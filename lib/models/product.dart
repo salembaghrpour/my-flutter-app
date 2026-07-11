@@ -1,4 +1,5 @@
 // lib/models/product.dart
+import '../core/local/db/app_database.dart'; // مسیر دیتابیس برای دسترسی به LocalProduct
 
 class Product {
   final int id;
@@ -27,7 +28,6 @@ class Product {
       name: json['name'] ?? 'بدون نام',
       code: json['code']?.toString(),
       barcode: json['barcode']?.toString(),
-      // پشتیبانی از کلیدهای مختلف (price یا selling_price)
       sellingPrice: (json['selling_price'] ?? json['price'] ?? 0).toDouble(),
       description: json['description'],
       imagePath: json['image_path'],
@@ -35,7 +35,20 @@ class Product {
     );
   }
 
-  // جهت استفاده در سبد خرید (اگر کنترلر سبد خرید نیاز به Map دارد)
+  // --- تبدیل اطلاعات دیتابیس محلی (Drift) به مدل اپلیکیشن ---
+  factory Product.fromLocal(LocalProduct local) {
+    return Product(
+      id: local.id,
+      name: local.name,
+      code: local.code,
+      barcode: local.barcode,
+      sellingPrice: local.sellingPrice,
+      description: local.description,
+      imagePath: local.imagePath,
+      isActive: local.isActive,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

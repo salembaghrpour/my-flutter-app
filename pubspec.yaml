@@ -1,7 +1,7 @@
 name: customer_app
 description: "A new Flutter project."
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.1.1+1
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -9,34 +9,71 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-    
+
   # بومی‌سازی و تقویم
   flutter_localizations:
     sdk: flutter
-    
+
   # ارتباط با API سرور شخصی
   http: ^1.2.0
-  
+
   # مدیریت وضعیت و مسیریابی
   get: ^4.6.6
-  
+
   # مدیریت کش و ذخیره آفلاین اطلاعات
   shared_preferences: ^2.2.2
   web_socket_channel: ^3.0.3
-  
+
   # نوتیفیکیشن‌های محلی و بج آیکون
   flutter_local_notifications: ^17.1.2
   flutter_app_badger: ^1.5.0
 
   # بررسی نسخه فعلی نصب شده روی گوشی
   package_info_plus: ^8.0.0
+
+  # باز کردن لینک در مرورگر خارجی (جایگزین ota_update برای دانلود آپدیت)
+  url_launcher: ^6.3.0
+
+  # =========================
+  # Offline-First (Drift & Hive)
+  # =========================
+  connectivity_plus: ^6.0.5
+  path: ^1.9.0
   
-  # دانلود و نصب خودکار آپدیت
-  ota_update: 7.1.0
+  # Drift (SQL برای کالاها و فاکتورها)
+  drift: ^2.34.1
+  drift_flutter: ^0.3.0
+  sqlite3: ^3.3.4
+  sqlite3_flutter_libs: ^0.6.0
+
+  # Hive (NoSQL برای صف پیام‌ها و سبد خرید)
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  
+  # Code Generators برای تولید کدهای دیتابیس
+  build_runner: ^2.4.7
+  drift_dev: ^2.34.2
+  hive_generator: ^2.0.1
+  
+  # پکیج ساخت خودکار آیکون برنامه
+  flutter_launcher_icons: ^0.14.1
 
 flutter:
   uses-material-design: true
+
+dependency_overrides:
+  source_gen: ^1.5.0
+  build: ^2.4.1
+  analyzer: ^6.4.1
+
+## =========================
+# تنظیمات آیکون برنامه
+# =========================
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/app_icon.png"

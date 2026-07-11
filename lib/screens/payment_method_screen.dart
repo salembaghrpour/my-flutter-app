@@ -53,13 +53,27 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                 onPressed: orderController.isLoading.value 
                   ? null 
                   : () async {
-                      // آیدی تستی حذف شد. تابع حالا فقط روش پرداخت را می‌گیرد
-                      // و کنترلر خودش آیدی واقعی را از حافظه می‌خواند
                       bool success = await orderController.submitOrder(selectedMethod);
                       
                       if (success) {
-                        // در صورت موفقیت، بازگشت به صفحه اصلی یا نمایش رسید
-                        Get.offAllNamed('/home'); // مسیر صفحه اصلی خود را جایگزین کنید
+                        // اضافه کردن پیام موفقیت کاربر‌پسند
+                        Get.snackbar(
+                          'موفق',
+                          'سفارش شما با موفقیت ثبت شد',
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: Colors.green,
+                          colorText: Colors.white,
+                        );
+                        
+                        // جلوگیری از کرش در صورت پیدا نشدن روت
+                        try {
+                          // دقت کنید: اگر روت شما '/' است آن را جایگزین '/home' کنید
+                          Get.offAllNamed('/home'); 
+                        } catch (e) {
+                          print('⚠️ خطا در مسیریابی: $e');
+                          // به عنوان پشتیبان، در صورتی که offAllNamed عمل نکرد به صفحه قبلی برمی‌گردد
+                          Get.back();
+                        }
                       }
                     },
                 child: orderController.isLoading.value

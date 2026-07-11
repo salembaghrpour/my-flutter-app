@@ -1,19 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
@@ -31,6 +18,37 @@
 
   <title>customer_app</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- اسکریپت مربوط به نوتیفیکیشن وب -->
+  <script>
+    window.requestWebNotificationPermission = function() {
+      if (!("Notification" in window)) {
+        console.log("This browser does not support desktop notification");
+        return;
+      }
+      if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+        Notification.requestPermission().then(function (permission) {
+          if (permission === "granted") {
+            console.log("Web Notification permission granted.");
+          }
+        });
+      }
+    };
+
+    window.showWebNotification = function(title, body) {
+      if (("Notification" in window) && Notification.permission === "granted") {
+        var notification = new Notification(title, {
+          body: body,
+          icon: "icons/Icon-192.png" // آیکونی که در PWA نمایش داده می‌شود
+        });
+        
+        notification.onclick = function() {
+          window.focus();
+          this.close();
+        };
+      }
+    };
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

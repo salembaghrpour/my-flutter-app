@@ -6,8 +6,8 @@ class ChatBubble extends StatelessWidget {
   final String text;
   final bool isMe;
   final String? timestamp;
-  final String? status; // 'sent', 'read', etc.
-  final bool isRead; // فیلد جدید برای راحتی در بررسی تیک دوم
+  final String? status; 
+  final bool isRead;
 
   const ChatBubble({
     Key? key,
@@ -15,7 +15,7 @@ class ChatBubble extends StatelessWidget {
     required this.isMe,
     this.timestamp,
     this.status,
-    this.isRead = false, // پیش‌فرض خوانده نشده
+    this.isRead = false,
   }) : super(key: key);
 
   String _formatTime() {
@@ -24,7 +24,6 @@ class ChatBubble extends StatelessWidget {
       final dt = DateTime.parse(timestamp!).toLocal();
       final now = DateTime.now();
       
-      // اگر پیام برای امروز است فقط ساعت، در غیر این صورت تاریخ و ساعت
       if (dt.year == now.year && dt.month == now.month && dt.day == now.day) {
         return DateFormat('HH:mm').format(dt);
       } else {
@@ -35,11 +34,23 @@ class ChatBubble extends StatelessWidget {
     }
   }
 
+  Widget _buildStatusIcon() {
+    if (!isMe) return const SizedBox.shrink();
+
+    // وضعیت بر اساس دیتای ارسال شده از کنترلر
+    if (status == 'sending') {
+      return Icon(Icons.access_time, size: 14, color: Colors.grey.shade600);
+    } else if (status == 'offline') {
+      return Icon(Icons.cloud_off, size: 14, color: Colors.red.shade400);
+    } else if (isRead || status == 'read') {
+      return Icon(Icons.done_all, size: 15, color: Colors.blue.shade700); // تیک دوم آبی
+    } else { 
+      return Icon(Icons.check, size: 15, color: Colors.grey.shade600); // تیک اول (ارسال به سرور)
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // ترکیب دو حالت برای اطمینان از نمایش درست تیک
-    final bool showDoubleTick = isRead || status == 'read';
-
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -73,11 +84,7 @@ class ChatBubble extends StatelessWidget {
                 ),
                 if (isMe) ...[
                   const SizedBox(width: 4),
-                  Icon(
-                    showDoubleTick ? Icons.done_all : Icons.check,
-                    size: 15,
-                    color: showDoubleTick ? Colors.blue.shade700 : Colors.grey.shade600,
-                  ),
+                  _buildStatusIcon(),
                 ]
               ],
             ),
