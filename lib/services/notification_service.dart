@@ -2,7 +2,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_app_badger/flutter_app_badger.dart';
-import 'dart:js' as js; // برای فراخوانی توابع جاوااسکریپت در وب
+// ایمپورت شرطی جایگزین شد:
+import 'js_stub.dart' if (dart.library.js) 'js_web.dart' as js; 
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
