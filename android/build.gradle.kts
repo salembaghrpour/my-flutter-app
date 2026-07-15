@@ -21,15 +21,20 @@ tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
 
-// قطعه کد اضافه شده برای تزریق خودکار Namespace به پکیج‌های قدیمی
+// قطعه کد اصلاح شده و ایمن برای تزریق خودکار Namespace به پکیج‌های قدیمی
 subprojects {
-    afterEvaluate {
-        val android = extensions.findByName("android")
-        if (android != null) {
-            val extension = android as? com.android.build.gradle.BaseExtension
-            if (extension != null && extension.namespace == null) {
-                extension.namespace = project.group.toString()
-            }
+    val configureNamespace: (Project) -> Unit = { proj ->
+        val androidExt = proj.extensions.findByName("android") as? com.android.build.gradle.BaseExtension
+        if (androidExt != null && androidExt.namespace == null) {
+            androidExt.namespace = proj.group.toString()
+        }
+    }
+
+    if (state.executed) {
+        configureNamespace(this)
+    } else {
+        afterEvaluate {
+            configureNamespace(this)
         }
     }
 }
