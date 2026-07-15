@@ -1,11 +1,13 @@
+// D:\accounting_Arya\mobile_app\customer_app\lib\services\update_service.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:url_launcher/url_launcher.dart'; // اضافه کردن این پکیج
-import 'package:flutter/foundation.dart' show kIsWeb; // برای تشخیص وب بودن
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class UpdateService {
+  // آدرس فایل JSON شامل اطلاعات نسخه جدید
   static const String _versionUrl = 'https://koraarya.ir/downloads/version.json';
 
   static Future<void> checkForUpdate(BuildContext context) async {
@@ -23,6 +25,7 @@ class UpdateService {
         String downloadUrl = data['download_url'] ?? '';
         String releaseNotes = data['release_notes'] ?? '';
 
+        // اگر نسخه سرور از نسخه نصب شده جدیدتر بود
         if (latestBuildNumber > currentBuildNumber) {
           if (context.mounted) {
             _showUpdateDialog(context, latestVersion, releaseNotes, downloadUrl);
@@ -37,28 +40,30 @@ class UpdateService {
   static void _showUpdateDialog(BuildContext context, String version, String notes, String downloadUrl) {
     showDialog(
       context: context,
-      barrierDismissible: false, 
+      barrierDismissible: false, // کاربر نتواند با کلیک در بیرون دیالوگ آن را ببندد
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('نسخه جدید در دسترس است ($version)'),
-          content: Text('تغییرات:\n$notes'),
+          title: Text('نسخه جدید در دسترس است ($version)', style: const TextStyle(fontFamily: 'Vazirmatn')),
+          content: Text('تغییرات:\n$notes', style: const TextStyle(fontFamily: 'Vazirmatn')),
           actions: [
             TextButton(
-              child: const Text('بعداً'),
+              child: const Text('بعداً', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.grey)),
               onPressed: () => Navigator.of(context).pop(),
             ),
             ElevatedButton(
-              child: const Text('دانلود و نصب'),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.amber),
+              child: const Text('دانلود و نصب', style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.black)),
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(); // بستن دیالوگ
                 
                 if (kIsWeb) {
-                  // اگر برنامه تحت وب (مثل آیفون) است، فقط به کاربر می‌گوییم صفحه را رفرش کند
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('برای دریافت نسخه جدید، لطفاً برنامه را ببندید و دوباره باز کنید یا صفحه را رفرش کنید.')),
+                    const SnackBar(
+                      content: Text('برای دریافت نسخه جدید، صفحه را رفرش کنید (F5).', style: TextStyle(fontFamily: 'Vazirmatn')),
+                      duration: Duration(seconds: 5),
+                    ),
                   );
                 } else {
-                  // اگر اندروید است، لینک دانلود را در مرورگر باز می‌کنیم
                   _launchURL(downloadUrl);
                 }
               },
@@ -69,11 +74,14 @@ class UpdateService {
     );
   }
 
-  // متد جدید جایگزین ota_update
   static Future<void> _launchURL(String url) async {
     final Uri uri = Uri.parse(url);
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      debugPrint('امکان باز کردن لینک وجود ندارد: $url');
+    try {
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        debugPrint('امکان باز کردن لینک وجود ندارد: $url');
+      }
+    } catch (e) {
+      debugPrint('خطا در باز کردن لینک مرورگر: $e');
     }
   }
 }

@@ -25,13 +25,14 @@ class ChatMessageLocalAdapter extends TypeAdapter<ChatMessageLocal> {
       createdAt: fields[5] as String,
       isSynced: fields[6] as bool,
       isRead: fields[7] as bool,
+      clientTempId: fields[8] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, ChatMessageLocal obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.localId)
       ..writeByte(1)
@@ -47,7 +48,9 @@ class ChatMessageLocalAdapter extends TypeAdapter<ChatMessageLocal> {
       ..writeByte(6)
       ..write(obj.isSynced)
       ..writeByte(7)
-      ..write(obj.isRead);
+      ..write(obj.isRead)
+      ..writeByte(8)
+      ..write(obj.clientTempId);
   }
 
   @override

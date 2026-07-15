@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "746712254012",
+    "project_id": "accounting-arya",
+    "storage_bucket": "accounting-arya.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:746712254012:android:c7d0c70b552ba8c6056539",
+        "android_client_info": {
+          "package_name": "com.example.customer_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhSc_mAbgs8lrnv4YUCsjkP90PARHRR0M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

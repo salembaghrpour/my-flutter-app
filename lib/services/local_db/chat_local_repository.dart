@@ -20,12 +20,30 @@ class ChatLocalRepository {
     return id;
   }
 
-  Future<List<ChatMessageLocal>> getMessagesByConversation(String conversationId) async {
+  // اضافه شدن پارامترهای limit و offset
+  Future<List<ChatMessageLocal>> getMessagesByConversation(String conversationId, {int limit = 20, int offset = 0}) async {
     final box = await _getBox();
-    final messages = box.values
+    var messages = box.values
         .where((msg) => msg.conversationId == conversationId)
         .toList();
-    messages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+        
+    // ابتدا مرتب‌سازی نزولی (جدیدترین به قدیمی‌ترین) برای اعمال صحیح صفحه‌بندی و اسکیپ کردن
+    messages.sort((a, b) {
+      DateTime dtA = DateTime.tryParse(a.createdAt) ?? DateTime.fromMillisecondsSinceEpoch(0);
+      DateTime dtB = DateTime.tryParse(b.createdAt) ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return dtB.compareTo(dtA);
+    });
+
+    // اعمال Pagination
+    messages = messages.skip(offset).take(limit).toList();
+
+    // مرتب‌سازی مجدد به صورت صعودی (قدیمی‌ترین به جدیدترین) برای نمایش صحیح
+    messages.sort((a, b) {
+      DateTime dtA = DateTime.tryParse(a.createdAt) ?? DateTime.fromMillisecondsSinceEpoch(0);
+      DateTime dtB = DateTime.tryParse(b.createdAt) ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return dtA.compareTo(dtB);
+    });
+
     return messages;
   }
 

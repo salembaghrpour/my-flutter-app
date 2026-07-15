@@ -44,3 +44,4 @@ class ChatSyncService extends GetxService {
     }
   }
 }
+ 

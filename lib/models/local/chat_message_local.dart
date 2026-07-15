@@ -28,6 +28,10 @@ class ChatMessageLocal extends HiveObject {
   @HiveField(7)
   bool isRead;
 
+  // تغییر مهم: فیلد جدید برای شناسه یکتای سمت کلاینت اضافه شد
+  @HiveField(8)
+  String? clientTempId;
+
   ChatMessageLocal({
     this.localId,
     this.serverId,
@@ -37,6 +41,8 @@ class ChatMessageLocal extends HiveObject {
     required this.createdAt,
     this.isSynced = false,
     this.isRead = false,
+    // تغییر مهم: فیلد جدید به کانستراکتور اضافه شد
+    this.clientTempId,
   });
 
   ChatMessageLocal copyWith({
@@ -48,6 +54,8 @@ class ChatMessageLocal extends HiveObject {
     String? createdAt,
     bool? isSynced,
     bool? isRead,
+    // تغییر مهم: فیلد جدید به متد copyWith اضافه شد
+    String? clientTempId,
   }) {
     return ChatMessageLocal(
       localId: localId ?? this.localId,
@@ -58,6 +66,8 @@ class ChatMessageLocal extends HiveObject {
       createdAt: createdAt ?? this.createdAt,
       isSynced: isSynced ?? this.isSynced,
       isRead: isRead ?? this.isRead,
+      // تغییر مهم: فیلد جدید به مقدار بازگشتی اضافه شد
+      clientTempId: clientTempId ?? this.clientTempId,
     );
   }
 }

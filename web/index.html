@@ -9,6 +9,7 @@
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="customer_app">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
@@ -19,7 +20,7 @@
   <title>customer_app</title>
   <link rel="manifest" href="manifest.json">
 
-  <!-- اسکریپت مربوط به نوتیفیکیشن وب -->
+  <!-- اسکریپت مربوط به نوتیفیکیشن و Badge وب/PWA -->
   <script>
     window.requestWebNotificationPermission = function() {
       if (!("Notification" in window)) {
@@ -46,6 +47,23 @@
           window.focus();
           this.close();
         };
+      }
+    };
+
+    // توابع App Badge API برای نمایش/حذف عدد روی آیکون PWA (iOS/Android/Web)
+    window.updateWebBadge = function(count) {
+      if (navigator.setAppBadge) {
+        navigator.setAppBadge(count).catch(function(error) {
+          console.error("Error setting app badge:", error);
+        });
+      }
+    };
+
+    window.clearWebBadge = function() {
+      if (navigator.clearAppBadge) {
+        navigator.clearAppBadge().catch(function(error) {
+          console.error("Error clearing app badge:", error);
+        });
       }
     };
   </script>

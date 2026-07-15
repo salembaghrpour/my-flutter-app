@@ -1,6 +1,8 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart'; 
 
 import 'controllers/chat_controller.dart';
 import 'constants/api_constants.dart';
@@ -10,6 +12,7 @@ import 'main_screen.dart';
 import 'services/storage_service.dart';
 import 'controllers/auth_controller.dart';
 import 'services/notification_service.dart';
+import 'services/fcm_service.dart'; 
 import 'services/connectivity_service.dart';
 import 'services/chat_service.dart';
 import 'services/sync/chat_sync_service.dart';
@@ -19,22 +22,27 @@ import 'core/local/db/app_database.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // --- تنظیمات دیتابیس‌های محلی (Drift و Hive) ---
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    // نکته: هندلر بک‌گراند در داخل FCMService.init ثبت می‌شود
+  } catch (e) {
+    debugPrint("Firebase init error: $e");
+  }
+
   await AppDatabase.initializeLocalDatabases();
-  // --------------------
 
   await NotificationService.init();
-  
-  // فراخوانی درخواست دسترسی نوتیفیکیشن در زمان باز شدن اپ
   await NotificationService.requestPermission();
+  
+  await FCMService.init(); 
 
   await Get.putAsync(() => StorageService().init());
   
-  // ترتیب مهم است: سرویس‌های پایه، بعد سرویس‌های همگام‌سازی
   Get.put(ChatService());
   Get.put(ConnectivityService(), permanent: true);
   Get.put(ChatSyncService(), permanent: true);
-  // ثبت سرویس همگام‌سازی سفارشات برای اجرای خودکار پس از اتصال
   Get.put(OrderSyncService(), permanent: true); 
 
   Get.put(AuthController());

@@ -1,7 +1,8 @@
-// lib/controllers/chat_controller.dart
+// D:\accounting_Arya\mobile_app\customer_app\lib\controllers\chat_controller.dart
 import 'package:get/get.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
+import 'package:uuid/uuid.dart'; 
 import 'dart:convert';
 import 'dart:async';
 import '../constants/api_constants.dart';
@@ -19,12 +20,19 @@ class ChatController extends GetxController {
   var isLoading = true.obs;
   var isChatScreenOpen = false.obs;
 
+  // متغیرهای مربوط به صفحه‌بندی
+  var isLoadingMore = false.obs;
+  var hasMoreMessages = true.obs;
+  int _limit = 20;
+  int _offset = 0;
+
   final ChatLocalRepository _localRepo = ChatLocalRepository();
   late ConnectivityService _connectivityService;
   late ChatService _chatService;
   WebSocketChannel? _channel;
   StreamSubscription? _wsSubscription;
   late String customerId;
+  final _uuid = const Uuid(); 
 
   @override
   void onInit() {
@@ -37,7 +45,7 @@ class ChatController extends GetxController {
     ever(isConnected, (bool connected) {
       if (connected && customerId.isNotEmpty) {
         _syncOfflineMessages();
-        _pullServerMessages();
+        _pullServerMessages(isPagination: false); // دریافت پیام‌های جدید پس از اتصال
       }
     });
 
@@ -60,11 +68,15 @@ class ChatController extends GetxController {
 
   Future<void> _initChat() async {
     isLoading.value = true;
+    _offset = 0;
+    hasMoreMessages.value = true;
+    messages.clear();
+
     try {
       if (_connectivityService.isConnected.value) {
-        await _pullServerMessages();
+        await _pullServerMessages(isPagination: false);
       } else {
-        await _loadMessagesFromLocal();
+        await _loadMessagesFromLocal(isPagination: false);
       }
       _calculateInitialUnreadCount();
     } catch (e) {
@@ -75,10 +87,54 @@ class ChatController extends GetxController {
     }
   }
 
-  Future<void> _pullServerMessages() async {
+  void _sortMessages() {
+    messages.sort((a, b) {
+      DateTime dtA = DateTime.tryParse(a['timestamp'] ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+      DateTime dtB = DateTime.tryParse(b['timestamp'] ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return dtA.compareTo(dtB);
+    });
+  }
+
+  // متد جدید برای لود پیام‌های قدیمی هنگام اسکرول
+  Future<void> loadMoreMessages() async {
+    if (isLoadingMore.value || !hasMoreMessages.value) return;
+    
+    isLoadingMore.value = true;
+    _offset += _limit;
+
     try {
-      final history = await _chatService.getChatHistory(customerId, 'customer');
-      final localMsgs = await _localRepo.getMessagesByConversation(customerId);
+      if (_connectivityService.isConnected.value) {
+        await _pullServerMessages(isPagination: true);
+      } else {
+        await _loadMessagesFromLocal(isPagination: true);
+      }
+    } catch (e) {
+      print("Error loading more messages: $e");
+    } finally {
+      isLoadingMore.value = false;
+    }
+  }
+
+  Future<void> _pullServerMessages({bool isPagination = false}) async {
+    try {
+      if (!isPagination) {
+        _offset = 0;
+        hasMoreMessages.value = true;
+      }
+
+      // اینجا limit و offset پاس داده می‌شود. متد getChatHistory در ChatService باید آپدیت شود.
+      final history = await _chatService.getChatHistory(customerId, 'customer', limit: _limit, offset: _offset);
+      
+      if (history.length < _limit) {
+        hasMoreMessages.value = false;
+      }
+
+      // دریافت پیام‌های لوکال فعلی برای مقایسه
+      final localMsgs = await _localRepo.getMessagesByConversation(
+        customerId, 
+        limit: _limit, 
+        offset: _offset
+      );
 
       final existingServerIds = localMsgs
           .map((m) => m.serverId)
@@ -88,34 +144,31 @@ class ChatController extends GetxController {
       bool needsUiUpdate = false;
 
       for (var msgData in history) {
-        // تغییر مهم ۱: چک کردن هم id و هم server_id
         final sId = msgData['server_id']?.toString() ?? msgData['id']?.toString();
+        final cTempId = msgData['original_client_id']?.toString() ?? msgData['client_temp_id']?.toString(); 
         
-        // تغییر مهم ۲: بررسی دقیق تر بولین و عدد برای وضعیت خوانده شدن
         bool isReadOnServer = msgData['is_read'] == true || 
                               msgData['is_read'] == 1 || 
                               msgData['is_read'] == 'true' || 
                               msgData['is_read'] == '1';
 
         if (sId != null && !existingServerIds.contains(sId)) {
-          // اضافه کردن پیام جدید به دیتابیس
           final newLocalMsg = ChatMessageLocal(
             serverId: sId,
+            clientTempId: cTempId, 
             conversationId: customerId,
-            senderType: msgData['sender'] ?? 'admin',
-            content: msgData['text'] ?? '',
-            createdAt: msgData['timestamp'] ?? DateTime.now().toIso8601String(),
+            senderType: msgData['sender'] ?? msgData['sender_type'] ?? 'admin',
+            content: msgData['text'] ?? msgData['content'] ?? '',
+            createdAt: msgData['timestamp'] ?? msgData['created_at'] ?? DateTime.now().toIso8601String(),
             isSynced: true,
             isRead: isReadOnServer,
           );
           await _localRepo.saveMessage(newLocalMsg);
           needsUiUpdate = true;
         } else if (sId != null) {
-          // آپدیت وضعیت خوانده شدن پیام‌های موجود در گوشی با سرور
           final existingMsgs = localMsgs.where((m) => m.serverId == sId);
           if (existingMsgs.isNotEmpty) {
             final msg = existingMsgs.first;
-            // اگر در گوشی نخوانده است اما در سرور خوانده شده
             if (!msg.isRead && isReadOnServer) {
               msg.isRead = true;
               await msg.save();
@@ -125,42 +178,64 @@ class ChatController extends GetxController {
         }
       }
 
-      // فقط اگر تغییری در دیتابیس داشتیم لیست UI را دوباره می‌سازیم
-      if (needsUiUpdate || messages.isEmpty) {
-        await _loadMessagesFromLocal();
-      }
+      // همیشه پیام‌ها را پس از pull آپدیت می‌کنیم
+      await _loadMessagesFromLocal(isPagination: isPagination);
+      
     } catch (e) {
       print("Error pulling server messages: $e");
     }
   }
 
-  Future<void> _loadMessagesFromLocal() async {
-    final localMsgs = await _localRepo.getMessagesByConversation(customerId);
-    localMsgs.sort((a, b) => (a.createdAt).compareTo(b.createdAt));
-    _assignLocalMessages(localMsgs);
+  Future<void> _loadMessagesFromLocal({bool isPagination = false}) async {
+    if (!isPagination) {
+      _offset = 0;
+      hasMoreMessages.value = true;
+      messages.clear();
+    }
+
+    // اینجا limit و offset پاس داده می‌شود. متد در ChatLocalRepository باید آپدیت شود.
+    final localMsgs = await _localRepo.getMessagesByConversation(
+      customerId, 
+      limit: _limit, 
+      offset: _offset
+    );
+
+    if (localMsgs.length < _limit) {
+      hasMoreMessages.value = false;
+    }
+
+    _assignLocalMessages(localMsgs, isPagination: isPagination);
   }
 
-  void _assignLocalMessages(List<ChatMessageLocal> localMsgs) {
+  void _assignLocalMessages(List<ChatMessageLocal> localMsgs, {bool isPagination = false}) {
     var mappedList = localMsgs.map((m) {
       return {
         "local_id": m.localId,
         "server_id": m.serverId,
+        "client_temp_id": m.clientTempId, 
         "sender": m.senderType,
         "text": m.content,
         "timestamp": m.createdAt,
-        // اگر سینک نشده offline، اگر خوانده شده read، در غیر این صورت sent
         "status": !m.isSynced ? "offline" : (m.isRead ? "read" : "sent"),
         "is_read": m.isRead,
       };
     }).toList();
     
-    // جایگزینی کامل لیست برای تریگر شدن GetX
-    messages.assignAll(mappedList);
+    if (isPagination) {
+      // اضافه کردن پیام‌های قدیمی به ابتدای لیست
+      var existingIds = messages.map((m) => m['local_id']).toSet();
+      var newMessages = mappedList.where((m) => !existingIds.contains(m['local_id'])).toList();
+      messages.insertAll(0, newMessages);
+    } else {
+      messages.assignAll(mappedList);
+    }
+    
+    _sortMessages(); 
   }
 
   Future<void> _syncOfflineMessages() async {
     try {
-      final localMsgs = await _localRepo.getMessagesByConversation(customerId);
+      final localMsgs = await _localRepo.getMessagesByConversation(customerId, limit: 1000, offset: 0);
       final unsyncedMsgs = localMsgs.where((m) => !m.isSynced).toList();
 
       for (var msg in unsyncedMsgs) {
@@ -183,39 +258,21 @@ class ChatController extends GetxController {
   }
 
   void _calculateInitialUnreadCount() {
-    try {
-      int count = 0;
-      for (var message in messages) {
-        bool isRead = message['is_read'] == true || message['is_read'] == 1;
-        String sender = message['sender_type'] ?? message['sender'] ?? 'admin';
-        if (!isRead && sender != 'customer') {
-          count++;
-        }
-      }
-      unreadCount.value = count;
-      NotificationService.updateBadge(count);
-    } catch (e) {
-      print("خطا در محاسبه تعداد پیام‌های نخوانده: $e");
-    }
+    unreadCount.value = messages.where((m) => (m['sender'] != 'customer' && m['is_read'] != true)).length;
   }
 
   void _connectWebSocket() {
     if (customerId.isEmpty) return;
-
     final wsUrl = '${ApiConstants.wsUrl}/api/chat/ws/customer/$customerId';
     
     try {
       _wsSubscription?.cancel();
       _channel?.sink.close();
-
       _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
       isConnected.value = true;
 
       _wsSubscription = _channel!.stream.listen((message) async {
         try {
-          // تغییر مهم ۳: لاگ کردن دیتای دریافتی برای خطایابی (حتما در کنسول چک کنید)
-          print("🌐 WEBSOCKET RECEIVED: $message");
-          
           final decodedMessage = jsonDecode(message);
           
           if (decodedMessage['type'] == "read_receipt") {
@@ -227,23 +284,29 @@ class ChatController extends GetxController {
           final textContent = decodedMessage['content'] ?? "";
           final timestamp = decodedMessage['created_at'] ?? DateTime.now().toIso8601String();
           final serverId = decodedMessage['id']?.toString();
+          
+          final uniqueTempId = decodedMessage['original_client_id']?.toString() ?? decodedMessage['client_temp_id']?.toString();
 
           bool alreadyExistsInUI = messages.any((m) => 
             (m['server_id'] != null && m['server_id'] == serverId) || 
+            (uniqueTempId != null && m['client_temp_id'] == uniqueTempId) ||
             (m['text'] == textContent && m['sender'] == sender && m['timestamp'] == timestamp)
           );
 
           if (alreadyExistsInUI) return;
 
-          final localMsgs = await _localRepo.getMessagesByConversation(customerId);
+          // بررسی دیتابیس برای جلوگیری از ذخیره مجدد (محدودیت به ۱۰۰ تای آخر برای سرعت)
+          final localMsgs = await _localRepo.getMessagesByConversation(customerId, limit: 100, offset: 0);
           bool alreadyExistsInDb = localMsgs.any((m) => 
              (serverId != null && m.serverId == serverId) || 
+             (uniqueTempId != null && m.clientTempId == uniqueTempId) ||
              (m.content == textContent && m.senderType == sender && m.createdAt == timestamp)
           );
 
           if (!alreadyExistsInDb) {
             await _localRepo.saveMessage(ChatMessageLocal(
                serverId: serverId,
+               clientTempId: uniqueTempId,
                conversationId: customerId,
                senderType: sender,
                content: textContent,
@@ -255,6 +318,7 @@ class ChatController extends GetxController {
 
           final newMessage = {
             "server_id": serverId,
+            "client_temp_id": uniqueTempId,
             "sender": sender,
             "text": textContent,
             "timestamp": timestamp,
@@ -262,6 +326,7 @@ class ChatController extends GetxController {
             "is_read": isChatScreenOpen.value,
           };
           messages.add(newMessage);
+          _sortMessages(); 
 
           if (sender == "admin") {
             if (!isChatScreenOpen.value) {
@@ -284,52 +349,36 @@ class ChatController extends GetxController {
         _reconnectWebSocket();
       }, onError: (e) {
         isConnected.value = false;
-        print("WS Error: $e");
       });
     } catch (e) {
       isConnected.value = false;
-      print("WS Connection Error: $e");
     }
   }
 
   void _reconnectWebSocket() {
-    Future.delayed(const Duration(seconds: 5), () {
-      if (!isConnected.value && !isClosed) {
-        _connectWebSocket();
-      }
-    });
+    if (!isConnected.value) {
+       Future.delayed(const Duration(seconds: 5), () {
+         _connectWebSocket();
+       });
+    }
   }
 
   void _handleReadReceipt() async {
-    print("✅ RUNNING _handleReadReceipt: Updating UI and DB to read");
-    bool updated = false;
-    
-    // یک کپی از لیست می‌گیریم تا موقع تغییر، GetX دقیق‌تر متوجه شود
-    var tempList = List<Map<String, dynamic>>.from(messages);
-
-    for (var i = 0; i < tempList.length; i++) {
-      if (tempList[i]['sender'] == "customer") {
-        if (tempList[i]['is_read'] != true) {
-          tempList[i]['is_read'] = true;
-          tempList[i]['status'] = "read";
-          updated = true;
-        }
-      }
+    for (var i = 0; i < messages.length; i++) {
+       messages[i]['status'] = 'read';
+       messages[i]['is_read'] = true;
     }
-    
-    if (updated) {
-      messages.assignAll(tempList); // استفاده از assignAll برای اعمال قطعی تغییرات در UI
-    }
-    
-    // ثبت تیک‌های آبی پیام‌های ما در دیتابیس لوکال
-    await _localRepo.markAllCustomerMessagesAsRead(customerId);
+    messages.refresh();
   }
 
   Future<void> sendMessage(String text) async {
     final timestamp = DateTime.now().toIso8601String();
+    
+    final String cTempId = 'cust_${customerId}_${_uuid.v4()}';
 
     final localMsg = ChatMessageLocal(
       conversationId: customerId,
+      clientTempId: cTempId, 
       senderType: 'customer',
       content: text,
       createdAt: timestamp,
@@ -340,6 +389,7 @@ class ChatController extends GetxController {
 
     final tempMessage = {
       "local_id": localId,
+      "client_temp_id": cTempId,
       "sender": "customer",
       "text": text,
       "timestamp": timestamp,
@@ -347,6 +397,7 @@ class ChatController extends GetxController {
       "is_read": false
     };
     messages.add(tempMessage);
+    _sortMessages(); 
 
     if (_connectivityService.isConnected.value) {
       try {
@@ -397,7 +448,6 @@ class ChatController extends GetxController {
     }
     messages.refresh();
     
-    // ثبت خوانده شدن پیام‌های ادمین در دیتابیس لوکال
     await _localRepo.markAdminMessagesAsRead(customerId);
 
     if (_connectivityService.isConnected.value) {

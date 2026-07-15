@@ -1,5 +1,6 @@
 // D:\accounting_Arya\mobile_app\customer_app\lib\controllers\auth_controller.dart
 import 'package:get/get.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../services/auth_service.dart';
 import '../services/storage_service.dart';
 
@@ -56,6 +57,16 @@ class AuthController extends GetxController {
         userId.value = user.id.toString();
         profileId.value = user.profileId.toString();
         userName.value = user.username;
+
+        // دریافت و ارسال توکن FCM به سرور
+        try {
+          String? fcmToken = await FirebaseMessaging.instance.getToken();
+          if (fcmToken != null) {
+            await _authService.updateFcmToken(user.id, fcmToken);
+          }
+        } catch (e) {
+          print("Error getting/sending FCM token: $e");
+        }
 
         // انتقال به صفحه اصلی
         Get.offAllNamed('/main');

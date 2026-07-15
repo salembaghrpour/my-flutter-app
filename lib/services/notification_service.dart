@@ -2,18 +2,17 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_app_badger/flutter_app_badger.dart';
-// ایمپورت شرطی جایگزین شد:
+import 'package:shared_preferences/shared_preferences.dart';
 import 'js_stub.dart' if (dart.library.js) 'js_web.dart' as js; 
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
 
   static Future<void> init() async {
-    if (kIsWeb) return; // در وب نیازی به این پکیج نیست و با جاوااسکریپت هندل می‌شود
+    if (kIsWeb) return; 
 
     const AndroidInitializationSettings androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     
-    // تنظیمات اولیه iOS
     const DarwinInitializationSettings iosSettings = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -28,11 +27,8 @@ class NotificationService {
     await _notificationsPlugin.initialize(settings);
   }
 
-  // اضافه شدن متد درخواست مجوز
   static Future<void> requestPermission() async {
     if (kIsWeb) {
-      // درخواست مجوز در وب (توسط اسکریپت داخل index.html)
-      // نکته: در iOS 16.4+ این متد حتماً باید بعد از کلیک کاربر روی یک دکمه اجرا شود
       try {
         js.context.callMethod('requestWebNotificationPermission');
       } catch (e) {
@@ -41,13 +37,11 @@ class NotificationService {
       return;
     }
 
-    // درخواست مجوز اندروید 13 به بالا (Tiramisu)
     final androidPlugin = _notificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     if (androidPlugin != null) {
       await androidPlugin.requestNotificationsPermission();
     }
 
-    // درخواست مجوز iOS
     final iosPlugin = _notificationsPlugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
     if (iosPlugin != null) {
       await iosPlugin.requestPermissions(alert: true, badge: true, sound: true);
@@ -56,7 +50,6 @@ class NotificationService {
 
   static Future<void> showNotification({required int id, required String title, required String body}) async {
     if (kIsWeb) {
-      // نمایش نوتیفیکیشن در وب
       try {
         js.context.callMethod('showWebNotification', [title, body]);
       } catch (e) {
@@ -66,14 +59,13 @@ class NotificationService {
     }
 
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'chat_messages', // شناسه کانال
-      'پیام‌های چت', // نام کانال
+      'chat_messages', 
+      'پیام‌های چت', 
       importance: Importance.max,
       priority: Priority.high,
       playSound: true,
     );
 
-    // تنظیمات نمایش در iOS
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
@@ -89,7 +81,18 @@ class NotificationService {
   }
 
   static Future<void> updateBadge(int count) async {
-    if (kIsWeb) return; // پکیج Badger در وب کار نمی‌کند
+    if (kIsWeb) {
+      try {
+        if (count > 0) {
+          js.context.callMethod('updateWebBadge', [count]);
+        } else {
+          js.context.callMethod('clearWebBadge');
+        }
+      } catch (e) {
+        debugPrint('Web badge update error: $e');
+      }
+      return; 
+    }
     
     if (await FlutterAppBadger.isAppBadgeSupported()) {
       if (count > 0) {
@@ -101,7 +104,18 @@ class NotificationService {
   }
 
   static Future<void> clearBadge() async {
-    if (kIsWeb) return;
+    // صفر کردن حافظه لوکال شمارنده (حالا هم برای وب و هم موبایل اعمال می‌شود)
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('unread_badge_count', 0);
+
+    if (kIsWeb) {
+      try {
+        js.context.callMethod('clearWebBadge');
+      } catch (e) {
+        debugPrint('Web badge clear error: $e');
+      }
+      return;
+    }
     
     if (await FlutterAppBadger.isAppBadgeSupported()) {
       FlutterAppBadger.removeBadge();

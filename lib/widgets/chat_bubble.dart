@@ -37,15 +37,14 @@ class ChatBubble extends StatelessWidget {
   Widget _buildStatusIcon() {
     if (!isMe) return const SizedBox.shrink();
 
-    // وضعیت بر اساس دیتای ارسال شده از کنترلر
     if (status == 'sending') {
-      return Icon(Icons.access_time, size: 14, color: Colors.grey.shade600);
+      return const Icon(Icons.access_time, size: 14, color: Colors.black45);
     } else if (status == 'offline') {
-      return Icon(Icons.cloud_off, size: 14, color: Colors.red.shade400);
+      return Icon(Icons.cloud_off, size: 14, color: Colors.red.shade700);
     } else if (isRead || status == 'read') {
-      return Icon(Icons.done_all, size: 15, color: Colors.blue.shade700); // تیک دوم آبی
+      return Icon(Icons.done_all, size: 15, color: Colors.blue.shade700);
     } else { 
-      return Icon(Icons.check, size: 15, color: Colors.grey.shade600); // تیک اول (ارسال به سرور)
+      return const Icon(Icons.check, size: 15, color: Colors.black54);
     }
   }
 
@@ -58,23 +57,38 @@ class ChatBubble extends StatelessWidget {
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
         decoration: BoxDecoration(
-          color: isMe ? Colors.blue.shade100 : Colors.grey.shade200,
+          // تغییر رنگ حباب دریافتی به آبی ملایم
+          color: isMe ? Colors.amber.shade200 : Colors.blue.shade50, 
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            )
+          ],
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isMe ? 16 : 0),
-            bottomRight: Radius.circular(isMe ? 0 : 16),
+            bottomLeft: Radius.circular(isMe ? 16 : 4),
+            bottomRight: Radius.circular(isMe ? 4 : 16),
           ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              text,
-              style: const TextStyle(fontFamily: 'Vazirmatn', fontSize: 14),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 2.0),
+              child: Text(
+                text,
+                style: const TextStyle(
+                  fontFamily: 'Vazirmatn', 
+                  fontSize: 14,
+                  color: Colors.black87,
+                  height: 1.4,
+                ),
+              ),
             ),
-            const SizedBox(height: 4),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [

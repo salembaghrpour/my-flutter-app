@@ -6,7 +6,7 @@ class ApiConstants {
 
   // آدرس پایه سرور (HTTPS) - پورت 8000 حذف و http به https تبدیل شد
   static const String baseUrl = 'https://app.koraarya.ir';
- // static const String baseUrl = 'http://127.0.0.1:8000';
+  //static const String baseUrl = 'http://127.0.0.1:8000';
   
   // آدرس پایه وب‌ساکت (WSS) - برای وب‌ساکت امن باید از wss استفاده کنید
   static const String wsUrl = 'wss://app.koraarya.ir';

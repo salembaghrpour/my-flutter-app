@@ -1,4 +1,4 @@
-// lib/services/chat_service.dart
+// D:\accounting_Arya\mobile_app\customer_app\lib\services\chat_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../constants/api_constants.dart';
@@ -9,8 +9,14 @@ class ChatService {
   // ==========================================
   // متدهای ارتباط با API
   // ==========================================
-  Future<List<Map<String, dynamic>>> getChatHistory(String userId, String userType) async {
-    final url = Uri.parse(ApiConstants.chatHistory(userType, userId)); 
+  
+  // اضافه شدن پارامترهای limit و offset
+  Future<List<Map<String, dynamic>>> getChatHistory(String userId, String userType, {int limit = 20, int offset = 0}) async {
+    String baseUrlString = ApiConstants.chatHistory(userType, userId);
+    
+    // تشخیص اینکه آیا URL از قبل دارای Query Parameter هست یا نه تا علامت ? یا & قرار دهیم
+    String connector = baseUrlString.contains('?') ? '&' : '?';
+    final url = Uri.parse('$baseUrlString${connector}limit=$limit&offset=$offset'); 
     
     try {
       final response = await http.get(url).timeout(const Duration(seconds: 15));
@@ -18,11 +24,12 @@ class ChatService {
       if (response.statusCode == 200) {
         List data = jsonDecode(utf8.decode(response.bodyBytes));
         return data.map((msg) => {
-          "server_id": msg['id'],
-          "sender": msg['sender_type'],
-          "text": msg['content'],
-          "timestamp": msg['created_at'],
-          "status": "read",
+          "id": msg['id'], // نام فیلد را به id تغییر می‌دهیم تا با بقیه جاها یکسان باشد
+          "client_temp_id": msg['client_temp_id'], 
+          "original_client_id": msg['original_client_id'], // <-- خواندن فیلد جدید
+          "sender_type": msg['sender_type'],
+          "content": msg['content'],
+          "created_at": msg['created_at'],
           "is_read": msg['is_read'] ?? true,
         }).toList();
       } else {
@@ -37,22 +44,31 @@ class ChatService {
     try {
       final url = '${ApiConstants.baseUrl}/api/chat/send';
       
+      // شناسه یکتای ساخته شده در کنترلر
+      final String uniqueId = message.clientTempId ?? message.localId!.toString();
+      
       final response = await http.post(
         Uri.parse(url), 
         body: jsonEncode({
           'content': message.content,
           'user_id': message.conversationId, 
-          'customer_id': message.conversationId,
           'user_type': 'customer',
           'sender_type': 'customer',
-          'client_temp_id': message.localId?.toString(), 
+          // تغییر بسیار مهم: ارسال شناسه یکتا برای هر دو فیلد
+          'client_temp_id': uniqueId, 
+          'original_client_id': uniqueId, // <-- ارسال فیلد جدید برای جلوگیری از تکرار
         }),
         headers: {'Content-Type': 'application/json'},
       ).timeout(const Duration(seconds: 15)); 
       
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
-        return {'success': true, 'server_id': data['id']};
+        return {
+          'success': true, 
+          'server_id': data['id'],
+          'created_at': data['created_at'],
+          'original_client_id': data['original_client_id'],
+        };
       } else {
         print('HTTP Error: ${response.statusCode} - ${response.body}');
       }

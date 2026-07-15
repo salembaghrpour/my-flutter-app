@@ -29,4 +29,34 @@ class AuthService {
       throw Exception('خطا در ارتباط با سرور: $e');
     }
   }
+
+  // متد اصلاح شده برای ارسال توکن FCM به سرور
+  Future<bool> updateFcmToken(int userId, String fcmToken) async {
+    try {
+      // تغییر به آدرس دقیق بک‌اند و استفاده از POST
+      final url = Uri.parse('${ApiConstants.baseUrl}/api/update-fcm-token');
+      
+      final response = await http.post(
+        url, 
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'user_id': userId,
+          'fcm_token': fcmToken,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print('✅ FCM Token updated successfully in backend');
+        return true;
+      } else {
+        print('❌ Failed to update FCM Token: ${response.statusCode}');
+        print('Response body: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('❌ Error updating FCM token: $e');
+      return false;
+    }
+  }
+
 }

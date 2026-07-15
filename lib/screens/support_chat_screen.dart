@@ -18,17 +18,31 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final ChatController chatController = Get.find<ChatController>();
+  
+  final RxBool showScrollToBottomFab = false.obs;
 
   @override
   void initState() {
     super.initState();
     chatController.isChatScreenOpen.value = true;
-    
-    // وقتی صفحه چت باز می‌شود، اگر پیام‌های جدیدی وجود دارد، آن‌ها را خوانده شده علامت می‌زنیم
     chatController.markAsRead();
     
+    _scrollController.addListener(() {
+      if (_scrollController.offset > 200) {
+        if (!showScrollToBottomFab.value) showScrollToBottomFab.value = true;
+      } else {
+        if (showScrollToBottomFab.value) showScrollToBottomFab.value = false;
+      }
+
+      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 50) {
+        chatController.loadMoreMessages();
+      }
+    });
+
     ever(chatController.messages, (_) {
-      Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
+      if (_scrollController.hasClients && _scrollController.offset < 100) {
+        Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
+      }
     });
     
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -59,30 +73,62 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
     final text = _messageController.text.trim();
     chatController.sendMessage(text);
     _messageController.clear();
+    _scrollToBottom();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: const Color(0xFFF7F7F8),
       body: Obx(() {
         return Column(
           children: [
             _buildConnectionIndicator(),
-            
             Expanded(
-              child: chatController.isLoading.value
-                  ? const Center(child: CircularProgressIndicator())
-                  : ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.all(16.0),
-                      reverse: true, 
-                      itemCount: chatController.messages.length,
-                      itemBuilder: (context, index) {
-                        final msg = chatController.messages[chatController.messages.length - 1 - index];
-                        return _buildMessageItem(msg);
-                      },
+              child: Stack(
+                children: [
+                  chatController.isLoading.value
+                      ? const Center(child: CircularProgressIndicator(color: Colors.amber))
+                      : ListView.builder(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                          reverse: true,
+                          itemCount: chatController.messages.length + (chatController.isLoadingMore.value ? 1 : 0),
+                          itemBuilder: (context, index) {
+                            if (index == chatController.messages.length) {
+                              return const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Center(
+                                  child: SizedBox(
+                                    width: 24, 
+                                    height: 24, 
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.amber)
+                                  )
+                                ),
+                              );
+                            }
+                            final msg = chatController.messages[chatController.messages.length - 1 - index];
+                            return _buildMessageItem(msg);
+                          },
+                        ),
+                  // دکمه بازگشت به پایین در موقعیت جدید (بالای کادر ارسال، مرکز)
+                  Positioned(
+                    bottom: 10,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Obx(() => showScrollToBottomFab.value
+                          ? FloatingActionButton(
+                              mini: true,
+                              backgroundColor: Colors.white,
+                              onPressed: _scrollToBottom,
+                              child: const Icon(Icons.keyboard_arrow_down, color: Colors.blue),
+                            )
+                          : const SizedBox.shrink()),
                     ),
+                  ),
+                ],
+              ),
             ),
             _buildMessageInput(),
           ],
@@ -96,23 +142,23 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
       if (chatController.isConnected.value) {
         return Container(
           width: double.infinity,
-          color: Colors.green.shade400,
+          color: Colors.green.shade500,
           padding: const EdgeInsets.symmetric(vertical: 4),
           child: const Text(
             'متصل به سرور',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white, fontSize: 10, fontFamily: 'Vazirmatn'),
+            style: TextStyle(color: Colors.white, fontSize: 10, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
           ),
         );
       } else {
         return Container(
           width: double.infinity,
-          color: Colors.orange.shade400, 
+          color: Colors.orange.shade500, 
           padding: const EdgeInsets.symmetric(vertical: 4),
           child: const Text(
             'آفلاین - پیام‌ها در صف ارسال قرار می‌گیرند',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white, fontSize: 10, fontFamily: 'Vazirmatn'),
+            style: TextStyle(color: Colors.white, fontSize: 10, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
           ),
         );
       }
@@ -159,10 +205,16 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
 
   Widget _buildMessageInput() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -2))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04), 
+            blurRadius: 10, 
+            offset: const Offset(0, -2)
+          )
+        ],
       ),
       child: SafeArea(
         child: Row(
@@ -171,30 +223,33 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(28.0),
+                  borderRadius: BorderRadius.circular(30.0), 
+                  border: Border.all(color: Colors.grey.shade300, width: 0.5),
                 ),
                 child: TextField(
                   controller: _messageController,
+                  minLines: 1,
+                  maxLines: 4,
                   decoration: const InputDecoration(
                     hintText: 'پیام خود را بنویسید...',
-                    hintStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14),
+                    hintStyle: TextStyle(fontFamily: 'Vazirmatn', fontSize: 14, color: Colors.grey),
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
                   ),
                   onSubmitted: (_) => _sendMessage(),
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             GestureDetector(
               onTap: _sendMessage,
               child: CircleAvatar(
                 radius: 24,
-                backgroundColor: Colors.blue.shade800,
+                backgroundColor: Colors.amber, 
                 child: const Icon(
-                  Icons.send, 
-                  color: Colors.white, 
-                  size: 20
+                  Icons.send_rounded, 
+                  color: Colors.black87, 
+                  size: 22
                 ),
               ),
             ),
@@ -204,3 +259,4 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
     );
   }
 }
+ 

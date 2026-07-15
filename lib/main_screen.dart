@@ -5,7 +5,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'screens/product_list_screen.dart';
 import 'screens/cart_screen.dart'; 
 import 'screens/support_chat_screen.dart'; 
-import 'screens/settings_screen.dart'; // <--- اضافه شدن ایمپورت صفحه تنظیمات
+import 'screens/settings_screen.dart';
 import 'controllers/cart_controller.dart'; 
 import 'controllers/auth_controller.dart';
 import 'controllers/chat_controller.dart';
@@ -50,7 +50,6 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
-    // فراخوانی متد بررسی آپدیت بلافاصله بعد از ساخته شدن صفحه
     WidgetsBinding.instance.addPostFrameCallback((_) {
       UpdateService.checkForUpdate(context);
     });
@@ -66,7 +65,6 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-  // <--- متد نمایش دیالوگ ورژن --->
   void _showVersionDialog() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
     String version = packageInfo.version;
@@ -78,7 +76,14 @@ class _MainScreenState extends State<MainScreen> {
       builder: (context) {
         return AlertDialog(
           title: const Text('درباره اپلیکیشن', textAlign: TextAlign.center),
-          content: Text('نسخه: $version\nبیلد: $buildNumber', textAlign: TextAlign.center, style: const TextStyle(fontSize: 16)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min, // این خط برای جلوگیری از اشغال کل ارتفاع صفحه است
+            children: [
+              Text('نسخه: $version', style: const TextStyle(fontSize: 16)),
+              const SizedBox(height: 8), // فاصله بین دو خط
+              Text('بیلد: $buildNumber', style: const TextStyle(fontSize: 16)),
+            ],
+          ),
           actionsAlignment: MainAxisAlignment.center,
           actions: [
             ElevatedButton(
@@ -95,43 +100,45 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.amber, // <--- رنگ طلایی برای تایتل بار
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+        backgroundColor: Colors.amber, 
+        title: Text(
+          _pageTitles[_selectedIndex], 
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black87)
+        ),
+        // اضافه کردن بخش جدید در زیر AppBar برای جلوگیری از تداخل متن با دکمه‌ها
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(30.0),
+          child: Container(
+            color: Colors.amber.shade400,
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  _pageTitles[_selectedIndex], 
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black87) // رنگ تیره برای وضوح
-                ),
-                const SizedBox(width: 8),
                 Obx(() => Text(
                   'سلام، ${authController.userName.value}',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87), // رنگ تیره برای وضوح
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87),
                 )),
+                if (_selectedIndex == 3)
+                  Obx(() => Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        chatController.isConnected.value ? Icons.circle : Icons.circle_outlined, 
+                        color: chatController.isConnected.value ? Colors.green.shade800 : Colors.red.shade800, 
+                        size: 10
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        chatController.isConnected.value ? 'آنلاین' : 'درحال اتصال...', 
+                        style: const TextStyle(fontSize: 11, color: Colors.black87, fontWeight: FontWeight.w500)
+                      ),
+                    ],
+                  )),
               ],
             ),
-            if (_selectedIndex == 3)
-              Obx(() => Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    chatController.isConnected.value ? Icons.circle : Icons.circle_outlined, 
-                    color: chatController.isConnected.value ? Colors.green.shade800 : Colors.red.shade800, 
-                    size: 10
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    chatController.isConnected.value ? 'آنلاین' : 'درحال اتصال...', 
-                    style: const TextStyle(fontSize: 11, color: Colors.black54)
-                  ),
-                ],
-              )),
-          ],
+          ),
         ),
         actions: [
-          // <--- دکمه جدید برای ورود به صفحه تنظیمات --->
           IconButton(
             icon: const Icon(Icons.settings, color: Colors.black87),
             onPressed: () {
@@ -142,7 +149,6 @@ class _MainScreenState extends State<MainScreen> {
             },
             tooltip: 'تنظیمات',
           ),
-          // <--- دکمه نمایش ورژن --->
           IconButton(
             icon: const Icon(Icons.info_outline, color: Colors.black87),
             onPressed: _showVersionDialog,
@@ -174,7 +180,7 @@ class _MainScreenState extends State<MainScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
-                      color: Colors.red, // رنگ قرمز برای بج روی پس‌زمینه طلایی بهتر دیده می‌شود
+                      color: Colors.red,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
@@ -195,11 +201,12 @@ class _MainScreenState extends State<MainScreen> {
       ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.amber, // نوار دکمه‌های پایین به رنگ طلایی
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: Theme.of(context).colorScheme.primary, 
-        unselectedItemColor: Colors.grey,
+        selectedItemColor: Colors.black87, // رنگ تیره برای آیتم انتخاب شده روی طلایی
+        unselectedItemColor: Colors.black54, // رنگ خاکستری تیره برای آیتم‌های دیگر
         items: [
           const BottomNavigationBarItem(
             icon: Icon(Icons.inventory_2_outlined),
