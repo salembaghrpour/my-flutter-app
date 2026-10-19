@@ -20,7 +20,6 @@ class ChatController extends GetxController {
   var isLoading = true.obs;
   var isChatScreenOpen = false.obs;
 
-  // متغیرهای مربوط به صفحه‌بندی
   var isLoadingMore = false.obs;
   var hasMoreMessages = true.obs;
   int _limit = 20;
@@ -31,7 +30,7 @@ class ChatController extends GetxController {
   late ChatService _chatService;
   WebSocketChannel? _channel;
   StreamSubscription? _wsSubscription;
-  late String customerId;
+  String customerId = ''; 
   final _uuid = const Uuid(); 
 
   @override
@@ -45,25 +44,34 @@ class ChatController extends GetxController {
     ever(isConnected, (bool connected) {
       if (connected && customerId.isNotEmpty) {
         _syncOfflineMessages();
-        _pullServerMessages(isPagination: false); // دریافت پیام‌های جدید پس از اتصال
+        _pullServerMessages(isPagination: false); 
       }
     });
 
     final authController = Get.find<AuthController>();
 
+    ever(authController.profileId, (String pId) {
+      if (pId.isNotEmpty && pId != customerId) {
+        customerId = pId;
+        _initChat();
+      } else if (pId.isEmpty) {
+        resetChat();
+      }
+    });
+
     if (authController.profileId.value.isNotEmpty) {
       customerId = authController.profileId.value;
       _initChat();
-    } else {
-      once(
-        authController.profileId,
-        (String pId) {
-          customerId = pId;
-          _initChat();
-        },
-        condition: () => authController.profileId.value.isNotEmpty,
-      );
     }
+  }
+
+  void resetChat() {
+    _wsSubscription?.cancel();
+    _channel?.sink.close();
+    customerId = '';
+    messages.clear();
+    unreadCount.value = 0;
+    isConnected.value = false;
   }
 
   Future<void> _initChat() async {
@@ -95,7 +103,6 @@ class ChatController extends GetxController {
     });
   }
 
-  // متد جدید برای لود پیام‌های قدیمی هنگام اسکرول
   Future<void> loadMoreMessages() async {
     if (isLoadingMore.value || !hasMoreMessages.value) return;
     
@@ -116,20 +123,19 @@ class ChatController extends GetxController {
   }
 
   Future<void> _pullServerMessages({bool isPagination = false}) async {
+    if (customerId.isEmpty) return; 
     try {
       if (!isPagination) {
         _offset = 0;
         hasMoreMessages.value = true;
       }
 
-      // اینجا limit و offset پاس داده می‌شود. متد getChatHistory در ChatService باید آپدیت شود.
       final history = await _chatService.getChatHistory(customerId, 'customer', limit: _limit, offset: _offset);
       
       if (history.length < _limit) {
         hasMoreMessages.value = false;
       }
 
-      // دریافت پیام‌های لوکال فعلی برای مقایسه
       final localMsgs = await _localRepo.getMessagesByConversation(
         customerId, 
         limit: _limit, 
@@ -140,8 +146,6 @@ class ChatController extends GetxController {
           .map((m) => m.serverId)
           .where((id) => id != null)
           .toSet();
-
-      bool needsUiUpdate = false;
 
       for (var msgData in history) {
         final sId = msgData['server_id']?.toString() ?? msgData['id']?.toString();
@@ -164,7 +168,6 @@ class ChatController extends GetxController {
             isRead: isReadOnServer,
           );
           await _localRepo.saveMessage(newLocalMsg);
-          needsUiUpdate = true;
         } else if (sId != null) {
           final existingMsgs = localMsgs.where((m) => m.serverId == sId);
           if (existingMsgs.isNotEmpty) {
@@ -172,13 +175,11 @@ class ChatController extends GetxController {
             if (!msg.isRead && isReadOnServer) {
               msg.isRead = true;
               await msg.save();
-              needsUiUpdate = true;
             }
           }
         }
       }
 
-      // همیشه پیام‌ها را پس از pull آپدیت می‌کنیم
       await _loadMessagesFromLocal(isPagination: isPagination);
       
     } catch (e) {
@@ -187,13 +188,13 @@ class ChatController extends GetxController {
   }
 
   Future<void> _loadMessagesFromLocal({bool isPagination = false}) async {
+    if (customerId.isEmpty) return; 
     if (!isPagination) {
       _offset = 0;
       hasMoreMessages.value = true;
       messages.clear();
     }
 
-    // اینجا limit و offset پاس داده می‌شود. متد در ChatLocalRepository باید آپدیت شود.
     final localMsgs = await _localRepo.getMessagesByConversation(
       customerId, 
       limit: _limit, 
@@ -222,9 +223,19 @@ class ChatController extends GetxController {
     }).toList();
     
     if (isPagination) {
-      // اضافه کردن پیام‌های قدیمی به ابتدای لیست
-      var existingIds = messages.map((m) => m['local_id']).toSet();
-      var newMessages = mappedList.where((m) => !existingIds.contains(m['local_id'])).toList();
+      // اصلاح منطق جلوگیری از تکرار برای پوشش دادن پیام‌های وب‌سوکت
+      var existingLocalIds = messages.map((m) => m['local_id']).where((id) => id != null).toSet();
+      var existingServerIds = messages.map((m) => m['server_id']).where((id) => id != null).toSet();
+      var existingTempIds = messages.map((m) => m['client_temp_id']).where((id) => id != null).toSet();
+
+      var newMessages = mappedList.where((m) {
+        bool matchLocal = m['local_id'] != null && existingLocalIds.contains(m['local_id']);
+        bool matchServer = m['server_id'] != null && existingServerIds.contains(m['server_id']);
+        bool matchTemp = m['client_temp_id'] != null && existingTempIds.contains(m['client_temp_id']);
+        
+        return !matchLocal && !matchServer && !matchTemp;
+      }).toList();
+      
       messages.insertAll(0, newMessages);
     } else {
       messages.assignAll(mappedList);
@@ -234,6 +245,7 @@ class ChatController extends GetxController {
   }
 
   Future<void> _syncOfflineMessages() async {
+    if (customerId.isEmpty) return;
     try {
       final localMsgs = await _localRepo.getMessagesByConversation(customerId, limit: 1000, offset: 0);
       final unsyncedMsgs = localMsgs.where((m) => !m.isSynced).toList();
@@ -295,7 +307,6 @@ class ChatController extends GetxController {
 
           if (alreadyExistsInUI) return;
 
-          // بررسی دیتابیس برای جلوگیری از ذخیره مجدد (محدودیت به ۱۰۰ تای آخر برای سرعت)
           final localMsgs = await _localRepo.getMessagesByConversation(customerId, limit: 100, offset: 0);
           bool alreadyExistsInDb = localMsgs.any((m) => 
              (serverId != null && m.serverId == serverId) || 
@@ -303,8 +314,10 @@ class ChatController extends GetxController {
              (m.content == textContent && m.senderType == sender && m.createdAt == timestamp)
           );
 
+          int? insertedLocalId;
           if (!alreadyExistsInDb) {
-            await _localRepo.saveMessage(ChatMessageLocal(
+            // دریافت local_id پس از ثبت در دیتابیس
+            insertedLocalId = await _localRepo.saveMessage(ChatMessageLocal(
                serverId: serverId,
                clientTempId: uniqueTempId,
                conversationId: customerId,
@@ -317,6 +330,7 @@ class ChatController extends GetxController {
           }
 
           final newMessage = {
+            "local_id": insertedLocalId, // افزودن آی‌دی محلی به لیست ویو
             "server_id": serverId,
             "client_temp_id": uniqueTempId,
             "sender": sender,
@@ -356,7 +370,7 @@ class ChatController extends GetxController {
   }
 
   void _reconnectWebSocket() {
-    if (!isConnected.value) {
+    if (!isConnected.value && customerId.isNotEmpty) {
        Future.delayed(const Duration(seconds: 5), () {
          _connectWebSocket();
        });
@@ -372,6 +386,7 @@ class ChatController extends GetxController {
   }
 
   Future<void> sendMessage(String text) async {
+    if (customerId.isEmpty) return; 
     final timestamp = DateTime.now().toIso8601String();
     
     final String cTempId = 'cust_${customerId}_${_uuid.v4()}';
@@ -437,6 +452,7 @@ class ChatController extends GetxController {
   }
 
   Future<void> markAsRead() async {
+    if (customerId.isEmpty) return;
     unreadCount.value = 0;
     NotificationService.clearBadge();
 

@@ -1,82 +1,430 @@
 // lib/widgets/product_card.dart
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import '../models/product.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:get/get.dart';
 
-// کارت گرید (برای نمایش با عکس)
-class ProductGridCard extends StatelessWidget {
-  final Product product;
+import '../models/catalog/product_summary.dart';
+import '../constants/api_constants.dart';
+import '../controllers/currency_controller.dart';
+
+const Color _kAddButtonColor = Color(0xFF7B6CF6);
+
+final CurrencyController _currencyController = Get.find<CurrencyController>();
+
+String _toFaDigits(String input) {
+  const en = '0123456789';
+  const fa = '۰۱۲۳۴۵۶۷۸۹';
+  final buffer = StringBuffer();
+  for (final rune in input.runes) {
+    final ch = String.fromCharCode(rune);
+    final index = en.indexOf(ch);
+    buffer.write(index >= 0 ? fa[index] : ch);
+  }
+  return buffer.toString();
+}
+
+String _formatPrice(num value) {
+  final digits = value.truncate().toString();
+  final reversed = digits.split('').reversed.toList();
+  final parts = <String>[];
+  for (var i = 0; i < reversed.length; i += 3) {
+    final end = i + 3 > reversed.length ? reversed.length : i + 3;
+    parts.add(reversed.sublist(i, end).join());
+  }
+  final grouped = parts.join(',').split('').reversed.join();
+  final signed = value < 0 ? '-$grouped' : grouped;
+  return _toFaDigits(signed);
+}
+
+String _priceText(ProductSummary product) {
+  final unit = (product.baseUnitName ?? '').trim();
+  final currencySymbol = _currencyController.displaySymbol.isNotEmpty
+      ? _currencyController.displaySymbol
+      : 'ریال';
+
+  final suffix = unit.isEmpty ? currencySymbol : '$currencySymbol / $unit';
+
+  if (product.displayPrice > 0) {
+    final price = _formatPrice(product.displayPrice);
+    if (product.hasMultiUnits) {
+      return 'از $price $suffix';
+    }
+    return '$price $suffix';
+  }
+
+  final ready = product.priceLabel.trim();
+  if (ready.isNotEmpty) {
+    final parsedNumeric = double.tryParse(ready);
+    if (parsedNumeric != null) {
+      final formatted = _formatPrice(parsedNumeric);
+      if (product.hasMultiUnits) {
+        return 'از $formatted $suffix';
+      }
+      return '$formatted $suffix';
+    }
+    return ready;
+  }
+
+  return 'نامشخص';
+}
+
+String? _cleanText(String? value) {
+  final text = value?.trim();
+  if (text == null || text.isEmpty) return null;
+  final lower = text.toLowerCase();
+  if (lower == 'null' || lower == 'undefined') return null;
+  return text;
+}
+
+class _ProductImage extends StatelessWidget {
+  final String? imagePath;
+  final double width;
+  final double height;
+  final BorderRadius borderRadius;
+
+  const _ProductImage({
+    required this.imagePath,
+    this.width = 80,
+    this.height = 80,
+    this.borderRadius = const BorderRadius.all(Radius.circular(12)),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    String? cleanPath;
+    if (imagePath != null && imagePath!.isNotEmpty) {
+      final fileName = imagePath!.replaceAll('\\', '/').split('/').last;
+      cleanPath = '/photos/$fileName';
+    }
+
+    final String? fullUrl = ApiConstants.getImageUrl(cleanPath);
+    final double iconSize = height * 0.4;
+
+    return SizedBox(
+      width: width,
+      height: height,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: borderRadius,
+        ),
+        child: ClipRRect(
+          borderRadius: borderRadius,
+          child: fullUrl == null
+              ? Icon(
+                  Icons.image_not_supported_outlined,
+                  color: Colors.grey.shade300,
+                  size: iconSize,
+                )
+              : CachedNetworkImage(
+                  imageUrl: fullUrl,
+                  fit: BoxFit.contain,
+                  width: width,
+                  height: height,
+                  placeholder: (context, url) => Center(
+                    child: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.grey.shade300,
+                      ),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Icon(
+                    Icons.broken_image_outlined,
+                    color: Colors.grey.shade400,
+                    size: iconSize,
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+class ProductListCard extends StatefulWidget {
+  final ProductSummary product;
   final VoidCallback onAddToCart;
+  final bool showImage;
+
+  const ProductListCard({
+    super.key,
+    required this.product,
+    required this.onAddToCart,
+    this.showImage = true,
+  });
+
+  @override
+  State<ProductListCard> createState() => _ProductListCardState();
+}
+
+class _ProductListCardState extends State<ProductListCard> {
+  bool _isImageExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final product = widget.product;
+    final description = _cleanText(product.description);
+    final attributes = product.customAttributes;
+    final unit = (product.baseUnitName ?? '').trim();
+    final bool hasImage = product.imagePath != null && product.imagePath!.isNotEmpty;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      elevation: 0,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+        child: Column(
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              product.name,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                height: 1.35,
+                              ),
+                            ),
+                          ),
+                          if (hasImage)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(20),
+                                onTap: () {
+                                  setState(() {
+                                    _isImageExpanded = !_isImageExpanded;
+                                  });
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: _isImageExpanded ? Colors.blue.shade50 : Colors.grey.shade100,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    _isImageExpanded ? Icons.image : Icons.image_outlined,
+                                    size: 18,
+                                    color: _isImageExpanded ? Colors.blue.shade600 : Colors.grey.shade600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          if (unit.isNotEmpty) ...[
+                            _SoftChip(text: unit),
+                          ],
+                        ],
+                      ),
+                      if (description != null) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          description,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            height: 1.4,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                      ],
+                      if (attributes.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: attributes
+                              .map((item) => _SoftChip(text: item, filled: true))
+                              .toList(),
+                        ),
+                      ],
+                      const SizedBox(height: 8),
+                      Text(
+                        _priceText(product),
+                        style: const TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (product.hasMultiUnits || product.hasBatches) ...[
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            if (product.hasMultiUnits)
+                              const _SoftChip(text: 'چند واحدی'),
+                            if (product.hasBatches)
+                              const _SoftChip(text: 'دارای بچ'),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                _AddButton(onPressed: widget.onAddToCart),
+              ],
+            ),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              child: _isImageExpanded
+                  ? Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Center(
+                        child: _ProductImage(
+                          imagePath: product.imagePath,
+                          width: double.infinity,
+                          height: 180,
+                        ),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ProductGridCard extends StatelessWidget {
+  final ProductSummary product;
+  final VoidCallback onAddToCart;
+  final bool showImage;
 
   const ProductGridCard({
     super.key,
     required this.product,
     required this.onAddToCart,
+    this.showImage = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    // فرمت‌بندی قیمت با جداکننده هزارگان
-    final formattedPrice = NumberFormat.decimalPattern('fa').format(product.sellingPrice);
+    final description = _cleanText(product.description);
+    final attributes = product.customAttributes;
+    final unit = (product.baseUnitName ?? '').trim();
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16), // لبه‌های گردتر
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08), // سایه کمی ملایم‌تر
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+    return Card(
+      elevation: 0,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: Colors.grey.shade200),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            height: 90,
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          if (showImage)
+            _ProductImage(
+              imagePath: product.imagePath,
+              height: 130,
+              width: double.infinity,
+              borderRadius: BorderRadius.zero,
             ),
-            child: const Icon(Icons.image_outlined, size: 40, color: Colors.grey),
-          ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(10.0),
+              padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    product.name,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          product.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                      if (unit.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 4),
+                          child: _SoftChip(text: unit),
+                        ),
+                    ],
                   ),
-                  Text(
-                    '$formattedPrice تومان',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.secondary, // رنگ مکمل (طلایی/نارنجی)
-                      fontSize: 14,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: onAddToCart,
-                    icon: const Icon(Icons.add_shopping_cart, size: 16),
-                    label: const Text('افزودن'),
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 36),
-                      padding: EdgeInsets.zero,
-                      elevation: 0,
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20), // لبه‌های گرد (Pill-shape)
+                  if (description != null) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11,
+                        height: 1.35,
+                        color: Colors.grey.shade700,
                       ),
                     ),
+                  ],
+                  if (attributes.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      attributes.join(' • '),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11,
+                        height: 1.35,
+                        color: Colors.grey.shade800,
+                      ),
+                    ),
+                  ],
+                  const Spacer(),
+                  Text(
+                    _priceText(product),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: Wrap(
+                          spacing: 4,
+                          runSpacing: 4,
+                          children: [
+                            if (product.hasMultiUnits)
+                              const _SoftChip(text: 'چند واحدی'),
+                            if (product.hasBatches)
+                              const _SoftChip(text: 'دارای بچ'),
+                          ],
+                        ),
+                      ),
+                      _AddButton(onPressed: onAddToCart, compact: true),
+                    ],
                   ),
                 ],
               ),
@@ -88,61 +436,62 @@ class ProductGridCard extends StatelessWidget {
   }
 }
 
-// کارت لیست (برای نمایش بدون عکس)
-class ProductListCard extends StatelessWidget {
-  final Product product;
-  final VoidCallback onAddToCart;
+class _AddButton extends StatelessWidget {
+  final VoidCallback onPressed;
+  final bool compact;
 
-  const ProductListCard({
-    super.key,
-    required this.product,
-    required this.onAddToCart,
+  const _AddButton({
+    required this.onPressed,
+    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final formattedPrice = NumberFormat.decimalPattern('fa').format(product.sellingPrice);
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16), // یکسان‌سازی گردی گوشه‌ها
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    final size = compact ? 36.0 : 42.0;
+    return Material(
+      color: _kAddButtonColor.withOpacity(0.18),
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onPressed,
+        child: SizedBox(
+          width: size,
+          height: size,
+          child: Icon(
+            Icons.layers_outlined,
+            color: _kAddButtonColor,
+            size: compact ? 18 : 22,
           ),
-        ],
+        ),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        title: Text(
-          product.name,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 8.0),
-          child: Text(
-            '$formattedPrice تومان',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.secondary, // رنگ مکمل (طلایی/نارنجی)
-              fontWeight: FontWeight.w800,
-              fontSize: 14,
-            ),
-          ),
-        ),
-        trailing: ElevatedButton(
-          onPressed: onAddToCart,
-          style: ElevatedButton.styleFrom(
-            shape: const CircleBorder(),
-            padding: const EdgeInsets.all(12),
-            elevation: 0, 
-            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-            foregroundColor: Theme.of(context).colorScheme.primary, // هماهنگی با تم اصلی
-          ),
-          child: const Icon(Icons.add_shopping_cart, size: 22),
+    );
+  }
+}
+
+class _SoftChip extends StatelessWidget {
+  final String text;
+  final bool filled;
+
+  const _SoftChip({
+    required this.text,
+    this.filled = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: filled ? const Color(0xFFF4F1FF) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 11,
+          color: Colors.grey.shade800,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );

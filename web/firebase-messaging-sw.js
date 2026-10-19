@@ -1,6 +1,11 @@
 // D:\accounting_Arya\mobile_app\customer_app\web\firebase-messaging-sw.js
-importScripts('https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js');
-importScripts('https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js');
+//importScripts('https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js');
+//importScripts('https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js');
+
+// این دو خط را جایگزین دو خط اول فایل خود کنید:
+importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
+
 
 // تنظیمات اختصاصی پروژه شما
 const firebaseConfig = {

@@ -8,7 +8,7 @@ part of 'chat_message_local.dart';
 
 class ChatMessageLocalAdapter extends TypeAdapter<ChatMessageLocal> {
   @override
-  final int typeId = 0;
+  final typeId = 0;
 
   @override
   ChatMessageLocal read(BinaryReader reader) {
@@ -17,22 +17,25 @@ class ChatMessageLocalAdapter extends TypeAdapter<ChatMessageLocal> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return ChatMessageLocal(
-      localId: fields[0] as int?,
+      localId: (fields[0] as num?)?.toInt(),
       serverId: fields[1] as String?,
       conversationId: fields[2] as String,
       senderType: fields[3] as String,
       content: fields[4] as String,
       createdAt: fields[5] as String,
-      isSynced: fields[6] as bool,
-      isRead: fields[7] as bool,
+      isSynced: fields[6] == null ? false : fields[6] as bool,
+      isRead: fields[7] == null ? false : fields[7] as bool,
       clientTempId: fields[8] as String?,
+      messageType: fields[9] == null ? 'text' : fields[9] as String,
+      fileUrl: fields[10] as String?,
+      replyToId: (fields[11] as num?)?.toInt(),
     );
   }
 
   @override
   void write(BinaryWriter writer, ChatMessageLocal obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.localId)
       ..writeByte(1)
@@ -50,7 +53,13 @@ class ChatMessageLocalAdapter extends TypeAdapter<ChatMessageLocal> {
       ..writeByte(7)
       ..write(obj.isRead)
       ..writeByte(8)
-      ..write(obj.clientTempId);
+      ..write(obj.clientTempId)
+      ..writeByte(9)
+      ..write(obj.messageType)
+      ..writeByte(10)
+      ..write(obj.fileUrl)
+      ..writeByte(11)
+      ..write(obj.replyToId);
   }
 
   @override

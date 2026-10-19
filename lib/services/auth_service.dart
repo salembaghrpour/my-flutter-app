@@ -30,17 +30,16 @@ class AuthService {
     }
   }
 
-  // متد اصلاح شده برای ارسال توکن FCM به سرور
-  Future<bool> updateFcmToken(int userId, String fcmToken) async {
+  // متد اصلاح شده برای ارسال توکن FCM به سرور بر اساس profileId
+  Future<bool> updateFcmToken(String profileId, String fcmToken) async {
     try {
-      // تغییر به آدرس دقیق بک‌اند و استفاده از POST
       final url = Uri.parse('${ApiConstants.baseUrl}/api/update-fcm-token');
       
       final response = await http.post(
         url, 
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'user_id': userId,
+          'profile_id': profileId, // تغییر از user_id به profile_id
           'fcm_token': fcmToken,
         }),
       );
@@ -58,5 +57,4 @@ class AuthService {
       return false;
     }
   }
-
 }

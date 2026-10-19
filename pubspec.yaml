@@ -13,6 +13,8 @@ dependencies:
   # بومی‌سازی و تقویم
   flutter_localizations:
     sdk: flutter
+  intl: any
+  shamsi_date: ^1.1.1
 
   # ارتباط با API سرور شخصی
   http: ^1.2.0
@@ -31,48 +33,49 @@ dependencies:
   # بررسی نسخه فعلی نصب شده روی گوشی
   package_info_plus: ^8.0.0
 
-  # باز کردن لینک در مرورگر خارجی (جایگزین ota_update برای دانلود آپدیت)
+  # باز کردن لینک در مرورگر خارجی
   url_launcher: ^6.3.0
 
   # =========================
-  # Offline-First (Drift & Hive)
+  # Offline-First (Drift & Hive CE)
   # =========================
   connectivity_plus: ^6.0.5
   path: ^1.9.0
-  
+
   # Drift (SQL برای کالاها و فاکتورها)
-  drift: ^2.34.1
+  drift: ^2.34.0
   drift_flutter: ^0.3.0
   sqlite3: ^3.3.4
   sqlite3_flutter_libs: ^0.6.0
 
-  # Hive (NoSQL برای صف پیام‌ها و سبد خرید)
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
+  # Hive CE (NoSQL برای صف پیام‌ها و سبد خرید)
+  hive_ce: any
+  hive_ce_flutter: any
   uuid: ^4.5.3
 
   firebase_core: ^4.12.1
   firebase_messaging: ^16.4.3
+  cached_network_image: ^3.4.1
+
+  # پکیج انتخاب تصویر
+  image_picker: ^1.1.2
+  file_picker: ^8.1.7
+ 
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  
+
   # Code Generators برای تولید کدهای دیتابیس
   build_runner: ^2.4.7
-  drift_dev: ^2.34.2
-  hive_generator: ^2.0.1
-  
+  drift_dev: ^2.34.0
+  hive_ce_generator: any
+
   # پکیج ساخت خودکار آیکون برنامه
   flutter_launcher_icons: ^0.14.1
 
 flutter:
   uses-material-design: true
-
-dependency_overrides:
-  source_gen: ^1.3.2
-  analyzer: ^6.4.1
-  build: ^3.0.0
 
 # =========================
 # تنظیمات آیکون برنامه (Android, iOS, Web)
@@ -84,6 +87,5 @@ flutter_launcher_icons:
   web:
     generate: true
     image_path: "assets/app_icon.png"
-    background_color: "#000000" # رنگ مشکی برای هماهنگی با حاشیه‌های عکس
-    theme_color: "#cca030"      # رنگ طلایی/برنزی برای نوار تم مرورگر
- 
+    background_color: "#000000"
+    theme_color: "#cca030"

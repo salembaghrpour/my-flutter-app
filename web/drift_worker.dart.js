@@ -3745,11 +3745,6 @@
       }
       return B._StringStackTrace_OdL;
     },
-    Future_Future(computation, $T) {
-      var result = new A._Future($.Zone__current, $T._eval$1("_Future<0>"));
-      A.Timer_Timer(B.Duration_0, new A.Future_Future_closure(computation, result));
-      return result;
-    },
     Future_Future$sync(computation, $T) {
       var error, stackTrace, exception, t1, t2, t3, t4, result = null;
       try {
@@ -3826,6 +3821,27 @@
         }
       }
       return _future;
+    },
+    FutureIterable_get_wait(_this, $T) {
+      var t2, t3, _i,
+        t1 = A._setArrayType([], $T._eval$1("JSArray<_FutureResult<0>>"));
+      for (t2 = _this.length, t3 = $T._eval$1("_FutureResult<0>"), _i = 0; _i < _this.length; _this.length === t2 || (0, A.throwConcurrentModificationError)(_this), ++_i)
+        t1.push(new A._FutureResult(_this[_i], t3));
+      if (t1.length === 0)
+        return A.Future_Future$value(A._setArrayType([], $T._eval$1("JSArray<0>")), $T._eval$1("List<0>"));
+      t2 = new A._Future($.Zone__current, $T._eval$1("_Future<List<0>>"));
+      A._FutureResult__waitAll(t1, new A.FutureIterable_get_wait_closure(new A._SyncCompleter(t2, $T._eval$1("_SyncCompleter<List<0>>")), t1, $T));
+      return t2;
+    },
+    _notNull(object) {
+      return object != null;
+    },
+    _FutureResult__waitAll(results, whenReady) {
+      var t1, _box_0 = {},
+        _i = _box_0.errors = _box_0.ready = 0,
+        onReady = new A._FutureResult__waitAll_onReady(_box_0, results, whenReady);
+      for (t1 = results.length; _i < results.length; results.length === t1 || (0, A.throwConcurrentModificationError)(results), ++_i)
+        results[_i]._wait$1(onReady);
     },
     _interceptError(error, stackTrace) {
       var replacement, t1, t2,
@@ -4288,7 +4304,7 @@
       $.Zone__current.print$1(line);
     },
     _rootFork($self, $parent, zone, specification, zoneValues) {
-      var valueMap, t1, handleUncaughtError;
+      var valueMap, t1, scheduleMicrotask, handleUncaughtError;
       type$.nullable_ZoneSpecification._as(specification);
       type$.nullable_Map_of_nullable_Object_and_nullable_Object._as(zoneValues);
       $.printToZone = A.async___printToZone$closure();
@@ -4301,13 +4317,16 @@
         valueMap = A.HashMap_HashMap$from(zoneValues, t1, t1);
       }
       t1 = new A._CustomZone(zone.get$_run(), zone.get$_runUnary(), zone.get$_runBinary(), zone.get$_registerCallback(), zone.get$_registerUnaryCallback(), zone.get$_registerBinaryCallback(), zone.get$_errorCallback(), zone.get$_scheduleMicrotask(), zone.get$_createTimer(), zone.get$_createPeriodicTimer(), zone.get$_print(), zone.get$_fork(), zone.get$_handleUncaughtError(), zone, valueMap);
+      scheduleMicrotask = specification.scheduleMicrotask;
+      if (scheduleMicrotask != null)
+        t1._scheduleMicrotask = new A._ZoneFunction(t1, scheduleMicrotask, type$._ZoneFunction_of_void_Function_4_Zone_and_ZoneDelegate_and_Zone_and_void_Function);
       handleUncaughtError = specification.handleUncaughtError;
       if (handleUncaughtError != null)
         t1._handleUncaughtError = new A._ZoneFunction(t1, handleUncaughtError, type$._ZoneFunction_of_void_Function_Zone_ZoneDelegate_Zone_Object_StackTrace);
       return t1;
     },
-    runZoned(body, zoneValues, $R) {
-      return A._runZoned(body, zoneValues, null, $R);
+    runZoned(body, zoneSpecification, zoneValues, $R) {
+      return A._runZoned(body, zoneValues, zoneSpecification, $R);
     },
     _runZoned(body, zoneValues, specification, $R) {
       return $.Zone__current.fork$2$specification$zoneValues(specification, zoneValues).run$1$1(body, $R);
@@ -4407,10 +4426,6 @@
     _SyncBroadcastStreamController__sendDone_closure: function _SyncBroadcastStreamController__sendDone_closure(t0) {
       this.$this = t0;
     },
-    Future_Future_closure: function Future_Future_closure(t0, t1) {
-      this.computation = t0;
-      this.result = t1;
-    },
     Future_Future$delayed_closure: function Future_Future$delayed_closure(t0, t1, t2) {
       this.computation = t0;
       this.result = t1;
@@ -4431,6 +4446,35 @@
       _.T = t3;
       _.cleanUp = t4;
       _.eagerError = t5;
+    },
+    FutureIterable_get_wait_closure: function FutureIterable_get_wait_closure(t0, t1, t2) {
+      this.c = t0;
+      this.results = t1;
+      this.T = t2;
+    },
+    ParallelWaitError: function ParallelWaitError(t0, t1, t2) {
+      this._defaultError = t0;
+      this._errorCount = t1;
+      this.$ti = t2;
+    },
+    _FutureResult: function _FutureResult(t0, t1) {
+      var _ = this;
+      _.source = t0;
+      _.errorOrNull = _.valueOrNull = null;
+      _.$ti = t1;
+    },
+    _FutureResult__wait_closure: function _FutureResult__wait_closure(t0, t1) {
+      this.$this = t0;
+      this.whenReady = t1;
+    },
+    _FutureResult__wait_closure0: function _FutureResult__wait_closure0(t0, t1) {
+      this.$this = t0;
+      this.whenReady = t1;
+    },
+    _FutureResult__waitAll_onReady: function _FutureResult__waitAll_onReady(t0, t1, t2) {
+      this._box_0 = t0;
+      this.results = t1;
+      this.whenReady = t2;
     },
     _Completer: function _Completer() {
     },
@@ -7357,6 +7401,18 @@
     NullRejectionException: function NullRejectionException(t0) {
       this.isUndefined = t0;
     },
+    _functionToJS0(f) {
+      var result;
+      if (typeof f == "function")
+        throw A.wrapException(A.ArgumentError$("Attempting to rewrap a JS function.", null));
+      result = function(_call, f) {
+        return function() {
+          return _call(f);
+        };
+      }(A._callDartFunctionFast0, f);
+      result[$.$get$DART_CLOSURE_PROPERTY_NAME()] = f;
+      return result;
+    },
     _functionToJS1(f) {
       var result;
       if (typeof f == "function")
@@ -7416,6 +7472,9 @@
       }(A._callDartFunctionFast5, f);
       result[$.$get$DART_CLOSURE_PROPERTY_NAME()] = f;
       return result;
+    },
+    _callDartFunctionFast0(callback) {
+      return type$.Function._as(callback).call$0();
     },
     _callDartFunctionFast1(callback, arg1, $length) {
       type$.Function._as(callback);
@@ -7775,7 +7834,7 @@
       token = new A.CancellationToken(new A._SyncCompleter(new A._Future($.Zone__current, $T._eval$1("_Future<0>")), $T._eval$1("_SyncCompleter<0>")), A._setArrayType([], type$.JSArray_of_void_Function), $T._eval$1("CancellationToken<0>"));
       t1.token = token;
       t2 = type$.nullable_Object;
-      A.runZoned(new A.runCancellable_closure(t1, operation, $T), A.LinkedHashMap_LinkedHashMap$_literal([B.Symbol_hNH, token], t2, t2), type$.void);
+      A.runZoned(new A.runCancellable_closure(t1, operation, $T), null, A.LinkedHashMap_LinkedHashMap$_literal([B.Symbol_hNH, token], t2, t2), type$.void);
       return t1.token;
     },
     checkIfCancelled() {
@@ -9369,6 +9428,26 @@
     },
     BaseVfsFile: function BaseVfsFile() {
     },
+    runWithNativeMicrotasks(callback, $T) {
+      var _null = null,
+        callbackList = new A.LinkedList(type$.LinkedList__AsyncCallbackEntry);
+      return A.runZoned(callback, new A._ZoneSpecification(_null, _null, _null, _null, _null, _null, _null, _null, new A.runWithNativeMicrotasks_closure(new A.runWithNativeMicrotasks_addTask(callbackList, A._functionToJS0(new A.runWithNativeMicrotasks_runTasks(callbackList)))), _null, _null, _null, _null), _null, $T);
+    },
+    _AsyncCallbackEntry0: function _AsyncCallbackEntry0(t0) {
+      var _ = this;
+      _.callback = t0;
+      _._previous = _._next = _._list = null;
+    },
+    runWithNativeMicrotasks_runTasks: function runWithNativeMicrotasks_runTasks(t0) {
+      this.callbackList = t0;
+    },
+    runWithNativeMicrotasks_addTask: function runWithNativeMicrotasks_addTask(t0, t1) {
+      this.callbackList = t0;
+      this.runTasksJs = t1;
+    },
+    runWithNativeMicrotasks_closure: function runWithNativeMicrotasks_closure(t0) {
+      this.addTask = t0;
+    },
     WasmSqliteBindings: function WasmSqliteBindings(t0) {
       this.bindings = t0;
     },
@@ -9541,7 +9620,7 @@
         t3 = type$.JSObject;
       A._EventStreamSubscription$(_this, "success", t2._as(new A.CompleteOpenIdbRequest_completeOrBlocked_closure(completer, _this, $T)), false, t3);
       A._EventStreamSubscription$(_this, "error", t2._as(new A.CompleteOpenIdbRequest_completeOrBlocked_closure0(completer, _this)), false, t3);
-      A._EventStreamSubscription$(_this, "blocked", t2._as(new A.CompleteOpenIdbRequest_completeOrBlocked_closure1(completer, _this)), false, t3);
+      A._EventStreamSubscription$(_this, "blocked", t2._as(new A.CompleteOpenIdbRequest_completeOrBlocked_closure1(completer)), false, t3);
       return t1;
     },
     _CursorReader: function _CursorReader(t0, t1) {
@@ -9576,9 +9655,8 @@
       this.completer = t0;
       this._this = t1;
     },
-    CompleteOpenIdbRequest_completeOrBlocked_closure1: function CompleteOpenIdbRequest_completeOrBlocked_closure1(t0, t1) {
+    CompleteOpenIdbRequest_completeOrBlocked_closure1: function CompleteOpenIdbRequest_completeOrBlocked_closure1(t0) {
       this.completer = t0;
-      this._this = t1;
     },
     WasmModuleLoader: function WasmModuleLoader(t0) {
       this._dartFunctions = t0;
@@ -9788,7 +9866,12 @@
       _.explicitlyLocked = false;
       _.syncHandle = null;
     },
-    IndexedDbFileSystem_open(dbName) {
+    _IndexedDbTransaction$(_transaction) {
+      var t1 = new A._IndexedDbTransaction(_transaction, new A._SyncCompleter(new A._Future($.Zone__current, type$._Future_void), type$._SyncCompleter_void), A._asJSObject(_transaction.objectStore("files")), A._asJSObject(_transaction.objectStore("blocks")));
+      t1._IndexedDbTransaction$1(_transaction);
+      return t1;
+    },
+    IndexedDbFileSystem_open(dbName, writeAutomatically) {
       var $async$goto = 0,
         $async$completer = A._makeAsyncAwaitCompleter(type$.IndexedDbFileSystem),
         $async$returnValue, t1, t2, t3, t4, fs;
@@ -9804,6 +9887,7 @@
               t3 = A.InMemoryFileSystem$(null);
               t4 = $.$get$BaseVirtualFileSystem__fallbackRandom();
               fs = new A.IndexedDbFileSystem(t2, t3, new A.LinkedList(type$.LinkedList__IndexedDbWorkItem), A.LinkedHashSet_LinkedHashSet$_empty(t1), A.LinkedHashMap_LinkedHashMap$_empty(t1, type$.int), t4, "indexeddb");
+              fs._writeAutomatically = false;
               $async$goto = 3;
               return A._asyncAwait(t2.open$0(), $async$IndexedDbFileSystem_open);
             case 3:
@@ -9830,21 +9914,41 @@
     AsynchronousIndexedDbFileSystem_open_closure: function AsynchronousIndexedDbFileSystem_open_closure(t0) {
       this.openRequest = t0;
     },
-    AsynchronousIndexedDbFileSystem__readFile_closure: function AsynchronousIndexedDbFileSystem__readFile_closure(t0) {
+    AsynchronousIndexedDbFileSystem__runTransaction_closure: function AsynchronousIndexedDbFileSystem__runTransaction_closure(t0, t1, t2) {
+      this.body = t0;
+      this.tx = t1;
+      this.raw = t2;
+    },
+    AsynchronousIndexedDbFileSystem__performWrites_closure: function AsynchronousIndexedDbFileSystem__performWrites_closure(t0) {
+      this.items = t0;
+    },
+    _IndexedDbTransaction: function _IndexedDbTransaction(t0, t1, t2, t3) {
+      var _ = this;
+      _._transaction = t0;
+      _._indexed_db$_completer = t1;
+      _.closeAfterwards = false;
+      _._files = t2;
+      _._blocks = t3;
+    },
+    _IndexedDbTransaction_closure: function _IndexedDbTransaction_closure(t0) {
+      this.$this = t0;
+    },
+    _IndexedDbTransaction_closure0: function _IndexedDbTransaction_closure0(t0) {
+      this.$this = t0;
+    },
+    _IndexedDbTransaction__readFile_closure: function _IndexedDbTransaction__readFile_closure(t0) {
       this.fileId = t0;
     },
-    AsynchronousIndexedDbFileSystem_readFully_closure: function AsynchronousIndexedDbFileSystem_readFully_closure(t0, t1, t2, t3) {
-      var _ = this;
-      _.row = t0;
-      _.result = t1;
-      _.rowOffset = t2;
-      _.length = t3;
+    _IndexedDbTransaction_startRead_completeRead: function _IndexedDbTransaction_startRead_completeRead(t0, t1, t2) {
+      this.result = t0;
+      this.rowOffset = t1;
+      this.length = t2;
     },
-    AsynchronousIndexedDbFileSystem__write_writeBlock: function AsynchronousIndexedDbFileSystem__write_writeBlock(t0, t1) {
-      this.blocks = t0;
+    _IndexedDbTransaction_write_writeBlock: function _IndexedDbTransaction_write_writeBlock(t0, t1) {
+      this.$this = t0;
       this.fileId = t1;
     },
-    AsynchronousIndexedDbFileSystem__write_closure: function AsynchronousIndexedDbFileSystem__write_closure(t0, t1) {
+    _IndexedDbTransaction_write_closure: function _IndexedDbTransaction_write_closure(t0, t1) {
       this.writeBlock = t0;
       this.writes = t1;
     },
@@ -9864,8 +9968,8 @@
     IndexedDbFileSystem: function IndexedDbFileSystem(t0, t1, t2, t3, t4, t5, t6) {
       var _ = this;
       _._asynchronous = t0;
-      _._isClosing = false;
-      _._currentWorkItem = null;
+      _._isWorking = _._isClosing = false;
+      _._writeAutomatically = true;
       _._memory = t1;
       _._pendingWork = t2;
       _._inMemoryOnlyFiles = t3;
@@ -9873,8 +9977,16 @@
       _.random = t5;
       _.name = t6;
     },
-    IndexedDbFileSystem__startWorkingIfNeeded_closure: function IndexedDbFileSystem__startWorkingIfNeeded_closure(t0) {
+    IndexedDbFileSystem__startWorkingIfNeeded_closure: function IndexedDbFileSystem__startWorkingIfNeeded_closure(t0, t1, t2) {
       this.$this = t0;
+      this.items = t1;
+      this.isImplicit = t2;
+    },
+    IndexedDbFileSystem_close_closure: function IndexedDbFileSystem_close_closure() {
+    },
+    IndexedDbFileSystem__readFiles_closure: function IndexedDbFileSystem__readFiles_closure(t0, t1) {
+      this.$this = t0;
+      this.additionalReads = t1;
     },
     _IndexedDbFile: function _IndexedDbFile(t0, t1, t2) {
       this.vfs = t0;
@@ -10059,7 +10171,7 @@
     },
     SimpleOpfsFileSystem: function SimpleOpfsFileSystem(t0, t1, t2) {
       var _ = this;
-      _._files = null;
+      _._simple_opfs$_files = null;
       _._simple_opfs$_memory = t0;
       _.random = t1;
       _.name = t2;
@@ -10895,6 +11007,19 @@
     skip$1(receiver, n) {
       return A.SubListIterable$(receiver, n, null, A._arrayInstanceType(receiver)._precomputed1);
     },
+    firstWhere$1(receiver, test) {
+      var end, i, element;
+      A._arrayInstanceType(receiver)._eval$1("bool(1)")._as(test);
+      end = receiver.length;
+      for (i = 0; i < end; ++i) {
+        element = receiver[i];
+        if (test.call$1(element))
+          return element;
+        if (receiver.length !== end)
+          throw A.wrapException(A.ConcurrentModificationError$(receiver));
+      }
+      throw A.wrapException(A.IterableElementError_noElement());
+    },
     elementAt$1(receiver, index) {
       if (!(index >= 0 && index < receiver.length))
         return A.ioore(receiver, index);
@@ -11572,7 +11697,7 @@
     call$0() {
       return A.Future_Future$value(null, type$.void);
     },
-    $signature: 2
+    $signature: 10
   };
   A.SentinelValue.prototype = {};
   A.EfficientLengthIterable.prototype = {};
@@ -12750,19 +12875,19 @@
     call$1(o) {
       return this.getTag(o);
     },
-    $signature: 114
+    $signature: 74
   };
   A.initHooks_closure0.prototype = {
     call$2(o, tag) {
       return this.getUnknownTag(o, tag);
     },
-    $signature: 39
+    $signature: 118
   };
   A.initHooks_closure1.prototype = {
     call$1(tag) {
       return this.prototypeForTag(A._asString(tag));
     },
-    $signature: 45
+    $signature: 59
   };
   A._Record.prototype = {
     toString$0(_) {
@@ -13347,7 +13472,7 @@
       t1.storedCallback = null;
       f.call$0();
     },
-    $signature: 26
+    $signature: 27
   };
   A._AsyncRun__initializeScheduleImmediate_closure.prototype = {
     call$1(callback) {
@@ -13357,19 +13482,19 @@
       t2 = this.span;
       t1.firstChild ? t1.removeChild(t2) : t1.appendChild(t2);
     },
-    $signature: 73
+    $signature: 49
   };
   A._AsyncRun__scheduleImmediateJsOverride_internalCallback.prototype = {
     call$0() {
       this.callback.call$0();
     },
-    $signature: 5
+    $signature: 3
   };
   A._AsyncRun__scheduleImmediateWithSetImmediate_internalCallback.prototype = {
     call$0() {
       this.callback.call$0();
     },
-    $signature: 5
+    $signature: 3
   };
   A._TimerImpl.prototype = {
     _TimerImpl$2(milliseconds, callback) {
@@ -13407,7 +13532,7 @@
       t1._tick = tick;
       _this.callback.call$1(t1);
     },
-    $signature: 5
+    $signature: 3
   };
   A._AsyncAwaitCompleter.prototype = {
     complete$1(value) {
@@ -13439,7 +13564,7 @@
     call$1(result) {
       return this.bodyFunction.call$2(0, result);
     },
-    $signature: 14
+    $signature: 15
   };
   A._awaitOnObject_closure0.prototype = {
     call$2(error, stackTrace) {
@@ -13451,7 +13576,7 @@
     call$2(errorCode, result) {
       this.$protected(A._asInt(errorCode), result);
     },
-    $signature: 48
+    $signature: 41
   };
   A._SyncStarIterator.prototype = {
     get$current() {
@@ -13794,28 +13919,6 @@
       return this.$this.$ti._eval$1("~(_BufferingStreamSubscription<1>)");
     }
   };
-  A.Future_Future_closure.prototype = {
-    call$0() {
-      var e, s, exception, t1, t2, t3, computationResult = null;
-      try {
-        computationResult = this.computation.call$0();
-      } catch (exception) {
-        e = A.unwrapException(exception);
-        s = A.getTraceFromException(exception);
-        t1 = e;
-        t2 = s;
-        t3 = A._interceptError(t1, t2);
-        if (t3 == null)
-          t1 = new A.AsyncError(t1, t2);
-        else
-          t1 = t3;
-        this.result._completeErrorObject$1(t1);
-        return;
-      }
-      this.result._complete$1(computationResult);
-    },
-    $signature: 0
-  };
   A.Future_Future$delayed_closure.prototype = {
     call$0() {
       this.T._as(null);
@@ -13878,6 +13981,92 @@
     $signature() {
       return this.T._eval$1("Null(0)");
     }
+  };
+  A.FutureIterable_get_wait_closure.prototype = {
+    call$1(errors) {
+      var t1, t2, t3, _i, r, t4, t5, _this = this;
+      if (errors === 0) {
+        t1 = A._setArrayType([], _this.T._eval$1("JSArray<0>"));
+        for (t2 = _this.results, t3 = t2.length, _i = 0; _i < t2.length; t2.length === t3 || (0, A.throwConcurrentModificationError)(t2), ++_i) {
+          r = t2[_i];
+          t4 = r.valueOrNull;
+          if (t4 == null)
+            r.$ti._precomputed1._as(t4);
+          t1.push(t4);
+        }
+        _this.c.complete$1(t1);
+      } else {
+        t1 = A._setArrayType([], type$.JSArray_nullable_AsyncError);
+        for (t2 = _this.results, t3 = t2.length, _i = 0; _i < t2.length; t2.length === t3 || (0, A.throwConcurrentModificationError)(t2), ++_i)
+          t1.push(t2[_i].errorOrNull);
+        t3 = _this.T;
+        t4 = A._setArrayType([], t3._eval$1("JSArray<0?>"));
+        for (t5 = t2.length, _i = 0; _i < t2.length; t2.length === t5 || (0, A.throwConcurrentModificationError)(t2), ++_i)
+          t4.push(t2[_i].valueOrNull);
+        _this.c.completeError$1(new A.ParallelWaitError(B.JSArray_methods.firstWhere$1(t1, A.async___notNull$closure()), errors, t3._eval$1("ParallelWaitError<List<0?>,List<AsyncError?>>")));
+      }
+    },
+    $signature: 4
+  };
+  A.ParallelWaitError.prototype = {
+    toString$0(_) {
+      var t2, t3,
+        _s17_ = "ParallelWaitError",
+        t1 = this._defaultError;
+      if (t1 == null) {
+        t1 = this._errorCount;
+        t2 = t1 <= 1;
+        if (t2)
+          return _s17_;
+        return "ParallelWaitError(" + t1 + " errors)";
+      }
+      t2 = this._errorCount;
+      t3 = t2 > 1;
+      if (t3)
+        t2 = "(" + t2 + " errors)";
+      else
+        t2 = "";
+      return _s17_ + t2 + ": " + A.S(t1.error);
+    },
+    get$stackTrace() {
+      var t1 = this._defaultError;
+      t1 = t1 == null ? null : t1.stackTrace;
+      return t1 == null ? A.Error.prototype.get$stackTrace.call(this) : t1;
+    }
+  };
+  A._FutureResult.prototype = {
+    _wait$1(whenReady) {
+      type$.void_Function_int._as(whenReady);
+      this.source.then$1$2$onError(new A._FutureResult__wait_closure(this, whenReady), new A._FutureResult__wait_closure0(this, whenReady), type$.Null);
+    }
+  };
+  A._FutureResult__wait_closure.prototype = {
+    call$1(value) {
+      var t1 = this.$this;
+      t1.valueOrNull = t1.$ti._precomputed1._as(value);
+      this.whenReady.call$1(0);
+    },
+    $signature() {
+      return this.$this.$ti._eval$1("Null(1)");
+    }
+  };
+  A._FutureResult__wait_closure0.prototype = {
+    call$2(error, stack) {
+      A._asObject(error);
+      type$.StackTrace._as(stack);
+      this.$this.errorOrNull = new A.AsyncError(error, stack);
+      this.whenReady.call$1(1);
+    },
+    $signature: 29
+  };
+  A._FutureResult__waitAll_onReady.prototype = {
+    call$1(error) {
+      var t1 = this._box_0,
+        t2 = t1.errors += error;
+      if (++t1.ready === this.results.length)
+        this.whenReady.call$1(t2);
+    },
+    $signature: 4
   };
   A._Completer.prototype = {
     completeError$2(error, stackTrace) {
@@ -14213,7 +14402,7 @@
     call$1(__wc0_formal) {
       this.joinedResult._completeWithResultOf$1(this.originalSource);
     },
-    $signature: 26
+    $signature: 27
   };
   A._Future__propagateToListeners_handleWhenCompleteCallback_closure0.prototype = {
     call$2(e, s) {
@@ -14221,7 +14410,7 @@
       type$.StackTrace._as(s);
       this.joinedResult._completeErrorObject$1(new A.AsyncError(e, s));
     },
-    $signature: 58
+    $signature: 29
   };
   A._Future__propagateToListeners_handleValueCallback.prototype = {
     call$0() {
@@ -14367,14 +14556,14 @@
     call$0() {
       return this.test.call$1(this.value);
     },
-    $signature: 29
+    $signature: 31
   };
   A.Stream_firstWhere__closure0.prototype = {
     call$1(isMatch) {
       if (A._asBool(isMatch))
         A._cancelAndValue(this.subscription, this.future, this.value);
     },
-    $signature: 72
+    $signature: 71
   };
   A.StreamTransformerBase.prototype = {$isStreamTransformer: 1};
   A._StreamController.prototype = {
@@ -16260,22 +16449,38 @@
     call$2(k, v) {
       this.result.$indexSet(0, this.K._as(k), this.V._as(v));
     },
-    $signature: 94
+    $signature: 86
   };
   A.LinkedList.prototype = {
-    remove$1(_, entry) {
-      this.$ti._precomputed1._as(entry);
-      if (entry._list !== this)
-        return false;
-      this._unlink$1(entry);
-      return true;
-    },
     get$iterator(_) {
       var _this = this;
       return new A._LinkedListIterator(_this, _this._modificationCount, _this._first, _this.$ti._eval$1("_LinkedListIterator<1>"));
     },
     get$length(_) {
       return this._collection$_length;
+    },
+    clear$0(_) {
+      var t1, next, _this = this;
+      ++_this._modificationCount;
+      if (_this._collection$_length === 0)
+        return;
+      t1 = _this._first;
+      t1.toString;
+      next = t1;
+      do {
+        t1 = next._next;
+        t1.toString;
+        next.set$_list(null);
+        next.set$_previous(null);
+        next.set$_next(null);
+        if (t1 !== _this._first) {
+          next = t1;
+          continue;
+        } else
+          break;
+      } while (true);
+      _this._first = null;
+      _this._collection$_length = 0;
     },
     get$first(_) {
       var t1;
@@ -16548,7 +16753,7 @@
       t2 = A.S(v);
       t1._contents += t2;
     },
-    $signature: 113
+    $signature: 98
   };
   A._MapBaseValueIterable.prototype = {
     get$length(_) {
@@ -16657,7 +16862,7 @@
       }
       return null;
     },
-    $signature: 21
+    $signature: 23
   };
   A._Utf8Decoder__decoderNonfatal_closure.prototype = {
     call$0() {
@@ -16669,7 +16874,7 @@
       }
       return null;
     },
-    $signature: 21
+    $signature: 23
   };
   A.AsciiCodec.prototype = {
     encode$1(source) {
@@ -17485,7 +17690,7 @@
       hash = hash + ((hash & 524287) << 10) & 536870911;
       return hash ^ hash >>> 6;
     },
-    $signature: 87
+    $signature: 119
   };
   A._BigIntImpl_hashCode_finish.prototype = {
     call$1(hash) {
@@ -17493,7 +17698,7 @@
       hash ^= hash >>> 11;
       return hash + ((hash & 16383) << 15) & 536870911;
     },
-    $signature: 28
+    $signature: 37
   };
   A._FinalizationRegistryWrapper.prototype = {
     attach$3$detach(value, token, detach) {
@@ -17915,7 +18120,7 @@
     call$2(msg, position) {
       throw A.wrapException(A.FormatException$("Illegal IPv6 address, " + msg, this.host, position));
     },
-    $signature: 66
+    $signature: 57
   };
   A._Uri.prototype = {
     get$_text() {
@@ -18531,13 +18736,13 @@
       } else
         return o;
     },
-    $signature: 15
+    $signature: 16
   };
   A.promiseToFuture_closure.prototype = {
     call$1(r) {
       return this.completer.complete$1(this.T._eval$1("0/?")._as(r));
     },
-    $signature: 14
+    $signature: 15
   };
   A.promiseToFuture_closure0.prototype = {
     call$1(e) {
@@ -18545,7 +18750,7 @@
         return this.completer.completeError$1(new A.NullRejectionException(e === undefined));
       return this.completer.completeError$1(e);
     },
-    $signature: 14
+    $signature: 15
   };
   A.dartify_convert.prototype = {
     call$1(o) {
@@ -18592,7 +18797,7 @@
       }
       return o;
     },
-    $signature: 15
+    $signature: 16
   };
   A._JSSecureRandom.prototype = {
     _JSSecureRandom$0() {
@@ -18840,7 +19045,7 @@
       });
       return A._asyncStartSync($async$call$1, $async$completer);
     },
-    $signature: 49
+    $signature: 42
   };
   A._PendingRequest.prototype = {
     completeWithError$2(error, trace) {
@@ -19139,7 +19344,7 @@
       t1.toString;
       return A._asInt(J.$index$asx(t1, index));
     },
-    $signature: 28
+    $signature: 37
   };
   A.DriftProtocol_decodePayload_readNullableInt.prototype = {
     call$1(index) {
@@ -19158,7 +19363,7 @@
       }
       return t1;
     },
-    $signature: 50
+    $signature: 46
   };
   A.Message.prototype = {};
   A.Request.prototype = {
@@ -19753,19 +19958,19 @@
       t1._closeRemainingConnections$0();
       t1._tableUpdateNotifications.close$0();
     },
-    $signature: 55
+    $signature: 50
   };
   A.ServerImplementation_serve_closure.prototype = {
     call$1(request) {
       return this.$this._handleRequest$2(this.comm, request);
     },
-    $signature: 62
+    $signature: 51
   };
   A.ServerImplementation_serve_closure0.prototype = {
     call$1(__wc0_formal) {
       return this.$this._activeChannels.remove$1(0, this.comm);
     },
-    $signature: 23
+    $signature: 25
   };
   A.ServerImplementation__handleRequest_closure.prototype = {
     call$0() {
@@ -19778,7 +19983,7 @@
     call$0() {
       return this.$this._cancellableOperations.remove$1(0, this.request.id);
     },
-    $signature: 69
+    $signature: 70
   };
   A.ServerImplementation__waitForTurn_idIsActive.prototype = {
     call$0() {
@@ -19791,13 +19996,13 @@
         return t2.length !== 0 && B.JSArray_methods.get$first(t2) === t1;
       }
     },
-    $signature: 29
+    $signature: 31
   };
   A.ServerImplementation__waitForTurn_closure.prototype = {
     call$1(__wc0_formal) {
       return this.idIsActive.call$0();
     },
-    $signature: 23
+    $signature: 25
   };
   A._ServerDbUser.prototype = {
     beforeOpen$2(executor, details) {
@@ -20401,14 +20606,14 @@
       var serialized = A._asJSObject(this._box_0.payload);
       return new A.Request(A._asInt(serialized.i), this.$this._deserializeRequest$1(serialized.p));
     },
-    $signature: 70
+    $signature: 72
   };
   A.WebProtocol_deserialize_decodeSuccess.prototype = {
     call$0() {
       var serialized = A._asJSObject(this._box_0.payload);
       return new A.SuccessResponse(A._asInt(serialized.i), this.$this._deserializeResponse$1(serialized.p));
     },
-    $signature: 77
+    $signature: 79
   };
   A.WebProtocol__serializeRequest_closure.prototype = {
     call$1(e) {
@@ -20444,7 +20649,7 @@
       t1 = t1 == null ? null : A._asInt(A._asDouble(t1));
       return new A.ExecuteBatchedStatement(new A.BatchedStatements(sqlStatements, t5), t1);
     },
-    $signature: 80
+    $signature: 84
   };
   A.WebProtocol__deserializeRequest_readBatched_closure.prototype = {
     call$1(e) {
@@ -20488,7 +20693,7 @@
       }
       return new A.TableUpdate(t1, table);
     },
-    $signature: 93
+    $signature: 95
   };
   A.WebProtocol__serializeSelectResult_closure.prototype = {
     call$1(e) {
@@ -20707,7 +20912,7 @@
       t1._log$2(t2, t3);
       return t1.get$impl().runSelect$2(t2, t3);
     },
-    $signature: 38
+    $signature: 97
   };
   A._BaseExecutor_runDelete_closure.prototype = {
     call$0() {
@@ -20717,7 +20922,7 @@
       t1._log$2(t2, t3);
       return t1.get$impl().runUpdate$2(t2, t3);
     },
-    $signature: 24
+    $signature: 26
   };
   A._BaseExecutor_runInsert_closure.prototype = {
     call$0() {
@@ -20727,7 +20932,7 @@
       t1._log$2(t2, t3);
       return t1.get$impl().runInsert$2(t2, t3);
     },
-    $signature: 24
+    $signature: 26
   };
   A._BaseExecutor_runCustom_closure.prototype = {
     call$0() {
@@ -20740,7 +20945,7 @@
       t1._log$2(t2, resolvedArgs);
       return t1.get$impl().runCustom$2(t2, resolvedArgs);
     },
-    $signature: 2
+    $signature: 10
   };
   A._BaseExecutor_runBatched_closure.prototype = {
     call$0() {
@@ -20748,7 +20953,7 @@
       t1.get$logStatements();
       return t1.get$impl().runBatched$1(this.statements);
     },
-    $signature: 2
+    $signature: 10
   };
   A._TransactionExecutor.prototype = {
     _checkCanOpen$0() {
@@ -20940,7 +21145,7 @@
     call$0() {
       return this.parent._waitingChildExecutors--;
     },
-    $signature: 41
+    $signature: 63
   };
   A.DelegatedDatabase.prototype = {
     get$impl() {
@@ -21120,7 +21325,7 @@
       });
       return A._asyncStartSync($async$call$0, $async$completer);
     },
-    $signature: 42
+    $signature: 43
   };
   A.DelegatedDatabase_close_closure.prototype = {
     call$0() {
@@ -21132,7 +21337,7 @@
       } else
         return A.Future_Future$value(null, type$.void);
     },
-    $signature: 2
+    $signature: 10
   };
   A._BeforeOpeningExecutor.prototype = {
     beginTransactionInContext$1(context) {
@@ -21230,7 +21435,7 @@
       }
       return t1;
     },
-    $signature: 43
+    $signature: 44
   };
   A.QueryInterceptor.prototype = {};
   A._InterceptedExecutor.prototype = {
@@ -21516,7 +21721,7 @@
     call$1(args) {
       return Date.now();
     },
-    $signature: 44
+    $signature: 45
   };
   A._unaryNumFunction_closure.prototype = {
     call$1(args) {
@@ -21526,7 +21731,7 @@
       else
         return null;
     },
-    $signature: 25
+    $signature: 28
   };
   A.LazyDatabase.prototype = {
     get$_delegate() {
@@ -21666,7 +21871,7 @@
       t1._delegateAvailable = true;
       this.delegate.complete$0();
     },
-    $signature: 46
+    $signature: 47
   };
   A.LazyDatabase_ensureOpen_closure.prototype = {
     call$1(__wc0_formal) {
@@ -21674,7 +21879,7 @@
       t1 === $ && A.throwLateFieldNI("_delegate");
       return t1.ensureOpen$1(this.user);
     },
-    $signature: 47
+    $signature: 48
   };
   A.Lock.prototype = {
     synchronized$1$1(block, $T) {
@@ -21706,7 +21911,7 @@
       if (t1._last === this.blockReleasedLock)
         t1._last = null;
     },
-    $signature: 5
+    $signature: 3
   };
   A.Lock_synchronized_closure.prototype = {
     call$1(__wc0_formal) {
@@ -21741,7 +21946,7 @@
         }
       }
     },
-    $signature: 9
+    $signature: 11
   };
   A.WebPortToChannel_channel_closure0.prototype = {
     call$1(e) {
@@ -22063,7 +22268,7 @@
       t1 = transfer == null ? B.List_empty : transfer;
       this.worker.postMessage(msg, t1);
     },
-    $signature: 18
+    $signature: 19
   };
   A.WasmInitializationMessage_sendToPort_closure.prototype = {
     call$2(msg, transfer) {
@@ -22072,7 +22277,7 @@
       t1 = transfer == null ? B.List_empty : transfer;
       this.port.postMessage(msg, t1);
     },
-    $signature: 18
+    $signature: 19
   };
   A.WasmInitializationMessage_sendToClient_closure.prototype = {
     call$2(msg, transfer) {
@@ -22081,7 +22286,7 @@
       t1 = transfer == null ? B.List_empty : transfer;
       this.worker.postMessage(msg, t1);
     },
-    $signature: 18
+    $signature: 19
   };
   A.CompatibilityResult.prototype = {};
   A.SharedWorkerCompatibilityResult.prototype = {
@@ -22094,7 +22299,7 @@
     call$1(index) {
       return A._asBool(J.$index$asx(this.asList, index));
     },
-    $signature: 51
+    $signature: 52
   };
   A.WorkerError.prototype = {
     sendTo$1(sender) {
@@ -22164,7 +22369,7 @@
       A._asJSObjectQ(this.openRequest.transaction).abort();
       this._box_0.indexedDbExists = false;
     },
-    $signature: 9
+    $signature: 11
   };
   A.opfsDatabases_closure.prototype = {
     call$1(data) {
@@ -22173,7 +22378,7 @@
         return A.ioore(data, 1);
       return A._asJSObject(data[1]);
     },
-    $signature: 52
+    $signature: 53
   };
   A.DriftServerController.prototype = {
     serve$1(message) {
@@ -22189,7 +22394,7 @@
     openConnection$body$DriftServerController(databaseName, enableMigrations, initializer, sqlite3WasmUri, storage) {
       var $async$goto = 0,
         $async$completer = A._makeAsyncAwaitCompleter(type$.QueryExecutor),
-        $async$returnValue, $async$self = this, vfs, t1, t2, response, file, ptr, db, sqlite3, $close;
+        $async$returnValue, $async$self = this, vfs, t1, t2, response, file, ptr, db, sqlite3, indexedDb, $close;
       var $async$openConnection$5$databaseName$enableMigrations$initializer$sqlite3WasmUri$storage = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
         if ($async$errorCode === 1)
           return A._asyncRethrow($async$result, $async$completer);
@@ -22202,6 +22407,7 @@
             case 3:
               // returning from await.
               sqlite3 = $async$result;
+              indexedDb = null;
               $close = null;
             case 4:
               // switch
@@ -22259,11 +22465,12 @@
             case 9:
               // case
               $async$goto = 14;
-              return A._asyncAwait(A.IndexedDbFileSystem_open(databaseName), $async$openConnection$5$databaseName$enableMigrations$initializer$sqlite3WasmUri$storage);
+              return A._asyncAwait(A.IndexedDbFileSystem_open(databaseName, false), $async$openConnection$5$databaseName$enableMigrations$initializer$sqlite3WasmUri$storage);
             case 14:
               // returning from await.
               vfs = $async$result;
               $close = vfs.get$close();
+              indexedDb = vfs;
               // goto after switch
               $async$goto = 5;
               break;
@@ -22294,6 +22501,11 @@
                 file.xWrite$2(response, 0);
                 file.xClose$0();
               }
+              t1 = indexedDb == null ? null : indexedDb._startWorkingIfNeeded$1$isImplicit(false);
+              $async$goto = 18;
+              return A._asyncAwait(t1 instanceof A._Future ? t1 : A._Future$value(t1, type$.void), $async$openConnection$5$databaseName$enableMigrations$initializer$sqlite3WasmUri$storage);
+            case 18:
+              // returning from await.
             case 16:
               // join
               type$.VirtualFileSystem._as(vfs);
@@ -22307,7 +22519,7 @@
               t1.$ti._eval$1("1?")._as(ptr);
               t1._jsWeakMap.set(vfs, ptr);
               t1 = A.LinkedHashMap_LinkedHashMap(type$.String, type$.CommonPreparedStatement);
-              db = new A.WasmDatabase(new A._WasmDelegate(sqlite3, "/database", null, $async$self._setup, true, enableMigrations, new A.PreparedStatementsCache(t1)), false, true, new A.Lock(), new A.Lock());
+              db = new A.WasmDatabase(new A._WasmDelegate(sqlite3, "/database", indexedDb, $async$self._setup, true, enableMigrations, new A.PreparedStatementsCache(t1)), false, true, new A.Lock(), new A.Lock());
               if ($close != null) {
                 $async$returnValue = A.ApplyInterceptor_interceptWith(db, new A._CloseVfsOnClose($close, db));
                 // goto return
@@ -22381,7 +22593,7 @@
       t3.whenComplete$1(new A.DriftServerController_serve__closure1(t2, t1, wasmServer));
       return wasmServer;
     },
-    $signature: 53
+    $signature: 54
   };
   A.DriftServerController_serve__closure.prototype = {
     call$0() {
@@ -22391,7 +22603,7 @@
       t2.onmessage = A._functionToJS1(new A.DriftServerController_serve___closure(new A._AsyncCompleter(t1, type$._AsyncCompleter_nullable_Uint8List)));
       return t1;
     },
-    $signature: 54
+    $signature: 55
   };
   A.DriftServerController_serve___closure.prototype = {
     call$1(e) {
@@ -22399,21 +22611,21 @@
         t1 = data == null ? null : data;
       this.completer.complete$1(t1);
     },
-    $signature: 9
+    $signature: 11
   };
   A.DriftServerController_serve__closure0.prototype = {
     call$0() {
       var t1 = this.message;
       return this.$this.openConnection$5$databaseName$enableMigrations$initializer$sqlite3WasmUri$storage(t1.databaseName, t1.enableMigrations, this.initializer, t1.sqlite3WasmUri, t1.storage);
     },
-    $signature: 37
+    $signature: 56
   };
   A.DriftServerController_serve__closure1.prototype = {
     call$0() {
       this.$this.servers.remove$1(0, this.message.databaseName);
       this.wasmServer.server.shutdown$0();
     },
-    $signature: 5
+    $signature: 3
   };
   A._CloseVfsOnClose.prototype = {
     close$1(inner) {
@@ -22474,7 +22686,7 @@
         A.throwExpression(A.StateError$("Stream is already closed"));
       t1.super$_BufferingStreamSubscription$_close();
     },
-    $signature: 56
+    $signature: 39
   };
   A.WasmCompatibility.prototype = {};
   A.CompleteIdbRequest_complete_closure1.prototype = {
@@ -22725,7 +22937,7 @@
           t1.cancel$0();
       }
     },
-    $signature: 57
+    $signature: 58
   };
   A.SharedDriftWorker__startFeatureDetection_closure.prototype = {
     call$1($event) {
@@ -22761,7 +22973,7 @@
     _flush$0() {
       var $async$goto = 0,
         $async$completer = A._makeAsyncAwaitCompleter(type$.void),
-        t1;
+        $async$self = this, t1;
       var $async$_flush$0 = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
         if ($async$errorCode === 1)
           return A._asyncRethrow($async$result, $async$completer);
@@ -22769,9 +22981,10 @@
           switch ($async$goto) {
             case 0:
               // Function start
-              t1 = A._Future$value(null, type$.void);
+              t1 = $async$self._fileSystem;
+              t1 = t1 == null ? null : t1._startWorkingIfNeeded$1$isImplicit(false);
               $async$goto = 2;
-              return A._asyncAwait(t1, $async$_flush$0);
+              return A._asyncAwait(t1 instanceof A._Future ? t1 : A._Future$value(t1, type$.void), $async$_flush$0);
             case 2:
               // returning from await.
               // implicit return
@@ -23184,20 +23397,20 @@
     call$1(part) {
       return A._asString(part) !== "";
     },
-    $signature: 3
+    $signature: 2
   };
   A.Context_split_closure.prototype = {
     call$1(part) {
       return A._asString(part).length !== 0;
     },
-    $signature: 3
+    $signature: 2
   };
   A._validateArgList_closure.prototype = {
     call$1(arg) {
       A._asStringQ(arg);
       return arg == null ? "null" : '"' + arg + '"';
     },
-    $signature: 59
+    $signature: 60
   };
   A.InternalStyle.prototype = {
     getRoot$1(path) {
@@ -23590,7 +23803,7 @@
     call$1(part) {
       return A._asString(part) !== "";
     },
-    $signature: 3
+    $signature: 2
   };
   A.SqliteException.prototype = {
     toString$0(_) {
@@ -23625,7 +23838,7 @@
       else
         return J.toString$0$(e);
     },
-    $signature: 60
+    $signature: 61
   };
   A.AllowedArgumentCount.prototype = {};
   A.DatabaseImplementation.prototype = {
@@ -23773,7 +23986,7 @@
     call$2(context, args) {
       A._extension_0_runWithArgsAndSetResult(context, this.$function, type$.List_RawSqliteValue._as(args));
     },
-    $signature: 61
+    $signature: 62
   };
   A.DatabaseImplementation__prepareInternal_freeIntermediateResults.prototype = {
     call$0() {
@@ -23904,6 +24117,7 @@
       do
         result = A._asInt(t2.sqlite3_step(t3));
       while (result === 100);
+      _this.reset$0();
       if (result !== 0 ? result !== 101 : t1)
         A.throwException(_this.database, result, "executing statement", _this.sql, _this._latestArguments);
     },
@@ -23919,6 +24133,7 @@
           t4.push(_this._readValue$1(i));
         B.JSArray_methods.add$1(rows, t4);
       }
+      _this.reset$0();
       if (resultCode !== 0 ? resultCode !== 101 : t1)
         A.throwException(_this.database, resultCode, "selecting from statement", _this.sql, _this._latestArguments);
       names = _this.get$_columnNames();
@@ -24142,7 +24357,7 @@
     call$1(e) {
       return A._asString(e).length !== 0;
     },
-    $signature: 3
+    $signature: 2
   };
   A.Cursor.prototype = {
     _calculateIndexes$0() {
@@ -24242,6 +24457,12 @@
     get$xDeviceCharacteristics() {
       return 0;
     },
+    xFileControl$2(op, ptr) {
+      return 12;
+    },
+    get$xSectorSize() {
+      return 4096;
+    },
     xRead$2(target, fileOffset) {
       var bytesRead = this.readInto$2(target, fileOffset),
         t1 = target.length;
@@ -24250,7 +24471,43 @@
         throw A.wrapException(B.VfsException_522);
       }
     },
-    $isVirtualFileSystemFile: 1
+    $isVirtualFileSystemFile: 1,
+    $isVirtualFileSystemFileV1: 1
+  };
+  A._AsyncCallbackEntry0.prototype = {};
+  A.runWithNativeMicrotasks_runTasks.prototype = {
+    call$0() {
+      var t1, item, t2;
+      for (t1 = this.callbackList; !t1.get$isEmpty(0);) {
+        if (t1._collection$_length === 0)
+          A.throwExpression(A.StateError$("No such element"));
+        item = t1._first;
+        t2 = item._list;
+        t2.toString;
+        t2._unlink$1(A._instanceType(item)._eval$1("LinkedListEntry.E")._as(item));
+        item.callback.call$0();
+      }
+    },
+    $signature: 0
+  };
+  A.runWithNativeMicrotasks_addTask.prototype = {
+    call$1(callback) {
+      var t1, t2, t3;
+      type$.void_Function._as(callback);
+      t1 = this.callbackList;
+      t2 = t1._collection$_length;
+      t3 = t1.$ti._precomputed1._as(new A._AsyncCallbackEntry0(callback));
+      t1._insertBefore$3$updateFirst(t1._first, t3, false);
+      if (t2 === 0)
+        A._asJSObject(init.G.Promise.resolve()).then(this.runTasksJs);
+    },
+    $signature: 9
+  };
+  A.runWithNativeMicrotasks_closure.prototype = {
+    call$4($self, $parent, zone, f) {
+      this.addTask.call$1(zone.bindCallbackGuarded$1(type$.void_Function._as(f)));
+    },
+    $signature: 64
   };
   A.WasmSqliteBindings.prototype = {$isRawSqliteBindings: 1};
   A.WasmDatabase0.prototype = {
@@ -24484,6 +24741,20 @@
     },
     xDeviceCharacteristics$1(file) {
       return type$.VirtualFileSystemFile._as(file).get$xDeviceCharacteristics();
+    },
+    xFileControl$3(file, op, pArg) {
+      type$.VirtualFileSystemFile._as(file);
+      A._asInt(op);
+      A._asInt(pArg);
+      if (type$.VirtualFileSystemFileV1._is(file))
+        return file.xFileControl$2(op, pArg);
+      return 12;
+    },
+    xSectorSize$1(file) {
+      type$.VirtualFileSystemFile._as(file);
+      if (type$.VirtualFileSystemFileV1._is(file))
+        return file.get$xSectorSize();
+      return 4096;
     },
     dispatchVoid$1(fn) {
       type$.void_Function._as(fn).call$0();
@@ -24772,7 +25043,7 @@
           _this.fetchNext.call$0();
       }
     },
-    $signature: 9
+    $signature: 11
   };
   A.AsyncJavaScriptIteratable_listen_fetchNextIfNecessary.prototype = {
     call$0() {
@@ -24886,10 +25157,7 @@
   };
   A.CompleteOpenIdbRequest_completeOrBlocked_closure1.prototype = {
     call$1($event) {
-      var t1 = A._asJSObjectQ(this._this.error);
-      if (t1 == null)
-        t1 = $event;
-      this.completer.completeError$1(t1);
+      this.completer.completeError$1(new A.StateError("IndexedDB open blocked"));
     },
     $signature: 1
   };
@@ -24954,6 +25222,8 @@
       _jsExporter.xUnlock = A._functionToJS2(_dartInstance.get$xUnlock());
       _jsExporter.xCheckReservedLock = A._functionToJS2(_dartInstance.get$xCheckReservedLock());
       _jsExporter.xDeviceCharacteristics = A._functionToJS1(_dartInstance.get$xDeviceCharacteristics());
+      _jsExporter.xFileControl = A._functionToJS3(_dartInstance.get$xFileControl());
+      _jsExporter.xSectorSize = A._functionToJS1(_dartInstance.get$xSectorSize());
       _jsExporter["dispatch_()v"] = A._functionToJS1(_dartInstance.get$dispatchVoid());
       _jsExporter["dispatch_()i"] = A._functionToJS1(_dartInstance.get$dispatchInt());
       _jsExporter.dispatch_update = A._functionToJS5(_dartInstance.get$dispatchUpdateHook());
@@ -24968,7 +25238,7 @@
       _jsExporter.changeset_apply_conflict = A._functionToJS3(_dartInstance.get$dispatchApplyConflict());
       return _jsExporter;
     },
-    $signature: 82
+    $signature: 126
   };
   A.WasmSqlite3.prototype = {};
   A.WasmVfs.prototype = {
@@ -26088,16 +26358,6 @@
     }
   };
   A.AsynchronousIndexedDbFileSystem.prototype = {
-    _rangeOverFile$3$endOffsetInclusive$startOffset(fileId, endOffsetInclusive, startOffset) {
-      var t1 = type$.JSArray_double;
-      return A._asJSObject(init.G.IDBKeyRange.bound(A._setArrayType([fileId, startOffset], t1), A._setArrayType([fileId, endOffsetInclusive], t1)));
-    },
-    _rangeOverFile$1(fileId) {
-      return this._rangeOverFile$3$endOffsetInclusive$startOffset(fileId, 9007199254740992, 0);
-    },
-    _rangeOverFile$2$startOffset(fileId, startOffset) {
-      return this._rangeOverFile$3$endOffsetInclusive$startOffset(fileId, 9007199254740992, startOffset);
-    },
     open$0() {
       var $async$goto = 0,
         $async$completer = A._makeAsyncAwaitCompleter(type$.void),
@@ -26124,10 +26384,168 @@
       });
       return A._asyncStartSync($async$open$0, $async$completer);
     },
-    close$0() {
-      var t1 = this._indexed_db$_database;
-      if (t1 != null)
-        t1.close();
+    _runTransaction$2$mode(body, mode) {
+      return this._runTransaction$body$AsynchronousIndexedDbFileSystem(type$.Future_void_Function__IndexedDbTransaction._as(body), mode);
+    },
+    _runTransaction$body$AsynchronousIndexedDbFileSystem(body, mode) {
+      var $async$goto = 0,
+        $async$completer = A._makeAsyncAwaitCompleter(type$.void),
+        $async$self = this, raw, tx, t1;
+      var $async$_runTransaction$2$mode = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
+        if ($async$errorCode === 1)
+          return A._asyncRethrow($async$result, $async$completer);
+        for (;;)
+          switch ($async$goto) {
+            case 0:
+              // Function start
+              t1 = $async$self._indexed_db$_database;
+              t1.toString;
+              raw = A._asJSObject(t1.transaction($.$get$_storesJs(), mode));
+              tx = A._IndexedDbTransaction$(raw);
+              $async$goto = 2;
+              return A._asyncAwait(A.runWithNativeMicrotasks(new A.AsynchronousIndexedDbFileSystem__runTransaction_closure(body, tx, raw), type$.Future_Null), $async$_runTransaction$2$mode);
+            case 2:
+              // returning from await.
+              $async$goto = 3;
+              return A._asyncAwait(tx._indexed_db$_completer.future, $async$_runTransaction$2$mode);
+            case 3:
+              // returning from await.
+              if (tx.closeAfterwards) {
+                t1 = $async$self._indexed_db$_database;
+                if (t1 != null)
+                  t1.close();
+                $async$self._indexed_db$_database = null;
+              }
+              // implicit return
+              return A._asyncReturn(null, $async$completer);
+          }
+      });
+      return A._asyncStartSync($async$_runTransaction$2$mode, $async$completer);
+    },
+    _performWrites$1(items) {
+      return this._runTransaction$2$mode(new A.AsynchronousIndexedDbFileSystem__performWrites_closure(type$.List__IndexedDbWorkItem._as(items)), "readwrite");
+    }
+  };
+  A.AsynchronousIndexedDbFileSystem_open_closure.prototype = {
+    call$1(change) {
+      var database;
+      A._asJSObject(change);
+      database = A._asJSObject(this.openRequest.result);
+      if (A._asInt(change.oldVersion) === 0) {
+        A._asJSObject(A._asJSObject(database.createObjectStore("files", {autoIncrement: true})).createIndex("fileName", "name", {unique: true}));
+        A._asJSObject(database.createObjectStore("blocks"));
+      }
+    },
+    $signature: 11
+  };
+  A.AsynchronousIndexedDbFileSystem__runTransaction_closure.prototype = {
+    call$0() {
+      var $async$goto = 0,
+        $async$completer = A._makeAsyncAwaitCompleter(type$.Null),
+        $async$handler = 1, $async$errorStack = [], $async$self = this, exception, $async$exception;
+      var $async$call$0 = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
+        if ($async$errorCode === 1) {
+          $async$errorStack.push($async$result);
+          $async$goto = $async$handler;
+        }
+        for (;;)
+          switch ($async$goto) {
+            case 0:
+              // Function start
+              $async$handler = 3;
+              $async$goto = 6;
+              return A._asyncAwait($async$self.body.call$1($async$self.tx), $async$call$0);
+            case 6:
+              // returning from await.
+              $async$handler = 1;
+              // goto after finally
+              $async$goto = 5;
+              break;
+            case 3:
+              // catch
+              $async$handler = 2;
+              $async$exception = $async$errorStack.pop();
+              $async$self.raw.abort();
+              throw $async$exception;
+              // goto after finally
+              $async$goto = 5;
+              break;
+            case 2:
+              // uncaught
+              // goto rethrow
+              $async$goto = 1;
+              break;
+            case 5:
+              // after finally
+              $async$self.raw.commit();
+              // implicit return
+              return A._asyncReturn(null, $async$completer);
+            case 1:
+              // rethrow
+              return A._asyncRethrow($async$errorStack.at(-1), $async$completer);
+          }
+      });
+      return A._asyncStartSync($async$call$0, $async$completer);
+    },
+    $signature: 17
+  };
+  A.AsynchronousIndexedDbFileSystem__performWrites_closure.prototype = {
+    call$1(tx) {
+      var $async$goto = 0,
+        $async$completer = A._makeAsyncAwaitCompleter(type$.void),
+        $async$self = this, t1, t2, _i;
+      var $async$call$1 = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
+        if ($async$errorCode === 1)
+          return A._asyncRethrow($async$result, $async$completer);
+        for (;;)
+          switch ($async$goto) {
+            case 0:
+              // Function start
+              t1 = $async$self.items, t2 = t1.length, _i = 0;
+            case 2:
+              // for condition
+              if (!(_i < t1.length)) {
+                // goto after for
+                $async$goto = 4;
+                break;
+              }
+              $async$goto = 5;
+              return A._asyncAwait(t1[_i].run$1(tx), $async$call$1);
+            case 5:
+              // returning from await.
+            case 3:
+              // for update
+              t1.length === t2 || (0, A.throwConcurrentModificationError)(t1), ++_i;
+              // goto for condition
+              $async$goto = 2;
+              break;
+            case 4:
+              // after for
+              // implicit return
+              return A._asyncReturn(null, $async$completer);
+          }
+      });
+      return A._asyncStartSync($async$call$1, $async$completer);
+    },
+    $signature: 18
+  };
+  A._IndexedDbTransaction.prototype = {
+    _IndexedDbTransaction$1(_transaction) {
+      var handleComplete = A._functionToJS0(new A._IndexedDbTransaction_closure(this)),
+        t1 = this._transaction;
+      t1.oncomplete = handleComplete;
+      t1.onabort = handleComplete;
+      t1.onerror = A._functionToJS0(new A._IndexedDbTransaction_closure0(this));
+    },
+    _rangeOverFile$3$endOffsetInclusive$startOffset(fileId, endOffsetInclusive, startOffset) {
+      var t1 = type$.JSArray_double;
+      return A._asJSObject(init.G.IDBKeyRange.bound(A._setArrayType([fileId, startOffset], t1), A._setArrayType([fileId, endOffsetInclusive], t1)));
+    },
+    _rangeOverFile$1(fileId) {
+      return this._rangeOverFile$3$endOffsetInclusive$startOffset(fileId, 9007199254740992, 0);
+    },
+    _rangeOverFile$2$startOffset(fileId, startOffset) {
+      return this._rangeOverFile$3$endOffsetInclusive$startOffset(fileId, 9007199254740992, startOffset);
     },
     listFiles$0() {
       var $async$goto = 0,
@@ -26141,7 +26559,7 @@
             case 0:
               // Function start
               result = A.LinkedHashMap_LinkedHashMap$_empty(type$.String, type$.int);
-              iterator = new A._CursorReader(A._asJSObject(A._asJSObject(A._asJSObject(A._asJSObject($async$self._indexed_db$_database.transaction("files", "readonly")).objectStore("files")).index("fileName")).openKeyCursor()), type$._CursorReader_JSObject);
+              iterator = new A._CursorReader(A._asJSObject(A._asJSObject($async$self._files.index("fileName")).openKeyCursor()), type$._CursorReader_JSObject);
             case 3:
               // while condition
               $async$goto = 5;
@@ -26191,7 +26609,7 @@
               // Function start
               $async$temp1 = A;
               $async$goto = 3;
-              return A._asyncAwait(A.CompleteIdbRequest_complete(A._asJSObject(A._asJSObject(A._asJSObject(A._asJSObject($async$self._indexed_db$_database.transaction("files", "readonly")).objectStore("files")).index("fileName")).getKey(path)), type$.double), $async$fileIdForPath$1);
+              return A._asyncAwait(A.CompleteIdbRequest_complete(A._asJSObject(A._asJSObject($async$self._files.index("fileName")).getKey(path)), type$.double), $async$fileIdForPath$1);
             case 3:
               // returning from await.
               $async$returnValue = $async$temp1._asInt($async$result);
@@ -26205,65 +26623,36 @@
       });
       return A._asyncStartSync($async$fileIdForPath$1, $async$completer);
     },
-    createFile$1(path) {
+    _readFile$1(fileId) {
+      return A.CompleteIdbRequest_complete(A._asJSObject(this._files.get(fileId)), type$.nullable_JSObject).then$1$1(new A._IndexedDbTransaction__readFile_closure(fileId), type$.JSObject);
+    },
+    startRead$2(fileId, additionalReads) {
+      return this.startRead$body$_IndexedDbTransaction(fileId, type$.List_Future_void._as(additionalReads));
+    },
+    startRead$body$_IndexedDbTransaction(fileId, additionalReads) {
       var $async$goto = 0,
-        $async$completer = A._makeAsyncAwaitCompleter(type$.int),
-        $async$returnValue, $async$self = this, $async$temp1;
-      var $async$createFile$1 = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
+        $async$completer = A._makeAsyncAwaitCompleter(type$.Uint8Buffer),
+        $async$returnValue, $async$self = this, t2, t3, row, t, rowOffset, t4, file, t1, result, reader;
+      var $async$startRead$2 = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
         if ($async$errorCode === 1)
           return A._asyncRethrow($async$result, $async$completer);
         for (;;)
           switch ($async$goto) {
             case 0:
               // Function start
-              $async$temp1 = A;
               $async$goto = 3;
-              return A._asyncAwait(A.CompleteIdbRequest_complete(A._asJSObject(A._asJSObject(A._asJSObject($async$self._indexed_db$_database.transaction("files", "readwrite")).objectStore("files")).put({name: path, length: 0})), type$.double), $async$createFile$1);
-            case 3:
-              // returning from await.
-              $async$returnValue = $async$temp1._asInt($async$result);
-              // goto return
-              $async$goto = 1;
-              break;
-            case 1:
-              // return
-              return A._asyncReturn($async$returnValue, $async$completer);
-          }
-      });
-      return A._asyncStartSync($async$createFile$1, $async$completer);
-    },
-    _readFile$2(transaction, fileId) {
-      return A.CompleteIdbRequest_complete(A._asJSObject(A._asJSObject(transaction.objectStore("files")).get(fileId)), type$.nullable_JSObject).then$1$1(new A.AsynchronousIndexedDbFileSystem__readFile_closure(fileId), type$.JSObject);
-    },
-    readFully$1(fileId) {
-      var $async$goto = 0,
-        $async$completer = A._makeAsyncAwaitCompleter(type$.Uint8List),
-        $async$returnValue, $async$self = this, transaction, blocks, file, result, readOperations, reader, t2, row, t, rowOffset, t1;
-      var $async$readFully$1 = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
-        if ($async$errorCode === 1)
-          return A._asyncRethrow($async$result, $async$completer);
-        for (;;)
-          switch ($async$goto) {
-            case 0:
-              // Function start
-              t1 = $async$self._indexed_db$_database;
-              t1.toString;
-              transaction = A._asJSObject(t1.transaction($.$get$AsynchronousIndexedDbFileSystem__storesJs(), "readonly"));
-              blocks = A._asJSObject(transaction.objectStore("blocks"));
-              $async$goto = 3;
-              return A._asyncAwait($async$self._readFile$2(transaction, fileId), $async$readFully$1);
+              return A._asyncAwait($async$self._readFile$1(fileId), $async$startRead$2);
             case 3:
               // returning from await.
               file = $async$result;
               t1 = A._asInt(file.length);
-              result = new Uint8Array(t1);
-              readOperations = A._setArrayType([], type$.JSArray_Future_void);
-              reader = new A._CursorReader(A._asJSObject(blocks.openCursor($async$self._rangeOverFile$1(fileId))), type$._CursorReader_JSObject);
-              t1 = type$.void, t2 = type$.JSArray_nullable_Object;
+              result = new A.Uint8Buffer(new Uint8Array(t1), t1);
+              reader = new A._CursorReader(A._asJSObject($async$self._blocks.openCursor($async$self._rangeOverFile$1(fileId))), type$._CursorReader_JSObject);
+              t1 = type$.NativeArrayBuffer, t2 = type$.JSArray_nullable_Object, t3 = type$.void;
             case 4:
               // for condition
               $async$goto = 6;
-              return A._asyncAwait(reader.moveNext$0(), $async$readFully$1);
+              return A._asyncAwait(reader.moveNext$0(), $async$startRead$2);
             case 6:
               // returning from await.
               if (!$async$result) {
@@ -26287,16 +26676,16 @@
                 $async$goto = 5;
                 break;
               }
-              B.JSArray_methods.add$1(readOperations, A.Future_Future$sync(new A.AsynchronousIndexedDbFileSystem_readFully_closure(row, result, rowOffset, Math.min(4096, A._asInt(file.length) - rowOffset)), t1));
+              t4 = new A._IndexedDbTransaction_startRead_completeRead(result, rowOffset, Math.min(4096, A._asInt(file.length) - rowOffset));
+              if (A.JSAnyUtilityExtension_instanceOfString(row.value, "Blob"))
+                B.JSArray_methods.add$1(additionalReads, A.ReadBlob_byteBuffer(A._asJSObject(row.value)).then$1$1(t4, t3));
+              else
+                t4.call$1(t1._as(row.value));
               // goto for condition
               $async$goto = 4;
               break;
             case 5:
               // after for
-              $async$goto = 7;
-              return A._asyncAwait(A.Future_wait(readOperations, t1), $async$readFully$1);
-            case 7:
-              // returning from await.
               $async$returnValue = result;
               // goto return
               $async$goto = 1;
@@ -26306,25 +26695,52 @@
               return A._asyncReturn($async$returnValue, $async$completer);
           }
       });
-      return A._asyncStartSync($async$readFully$1, $async$completer);
+      return A._asyncStartSync($async$startRead$2, $async$completer);
     },
-    _write$2(fileId, writes) {
+    createFile$1(path) {
       var $async$goto = 0,
-        $async$completer = A._makeAsyncAwaitCompleter(type$.void),
-        $async$self = this, transaction, blocks, file, t2, changedOffsets, fileCursor, t1;
-      var $async$_write$2 = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
+        $async$completer = A._makeAsyncAwaitCompleter(type$.int),
+        $async$returnValue, $async$self = this, $async$temp1;
+      var $async$createFile$1 = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
         if ($async$errorCode === 1)
           return A._asyncRethrow($async$result, $async$completer);
         for (;;)
           switch ($async$goto) {
             case 0:
               // Function start
-              t1 = $async$self._indexed_db$_database;
-              t1.toString;
-              transaction = A._asJSObject(t1.transaction($.$get$AsynchronousIndexedDbFileSystem__storesJs(), "readwrite"));
-              blocks = A._asJSObject(transaction.objectStore("blocks"));
+              if (($async$self._indexed_db$_completer.future._state & 30) !== 0)
+                A.throwExpression(A.StateError$("IDB transaction already completed"));
+              $async$temp1 = A;
+              $async$goto = 3;
+              return A._asyncAwait(A.CompleteIdbRequest_complete(A._asJSObject($async$self._files.put({name: path, length: 0})), type$.double), $async$createFile$1);
+            case 3:
+              // returning from await.
+              $async$returnValue = $async$temp1._asInt($async$result);
+              // goto return
+              $async$goto = 1;
+              break;
+            case 1:
+              // return
+              return A._asyncReturn($async$returnValue, $async$completer);
+          }
+      });
+      return A._asyncStartSync($async$createFile$1, $async$completer);
+    },
+    write$2(fileId, writes) {
+      var $async$goto = 0,
+        $async$completer = A._makeAsyncAwaitCompleter(type$.void),
+        $async$self = this, file, t1, t2, changedOffsets, fileCursor;
+      var $async$write$2 = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
+        if ($async$errorCode === 1)
+          return A._asyncRethrow($async$result, $async$completer);
+        for (;;)
+          switch ($async$goto) {
+            case 0:
+              // Function start
+              if (($async$self._indexed_db$_completer.future._state & 30) !== 0)
+                A.throwExpression(A.StateError$("IDB transaction already completed"));
               $async$goto = 2;
-              return A._asyncAwait($async$self._readFile$2(transaction, fileId), $async$_write$2);
+              return A._asyncAwait($async$self._readFile$1(fileId), $async$write$2);
             case 2:
               // returning from await.
               file = $async$result;
@@ -26334,20 +26750,20 @@
               B.JSArray_methods.sort$0(changedOffsets);
               t1 = A._arrayInstanceType(changedOffsets);
               $async$goto = 3;
-              return A._asyncAwait(A.Future_wait(new A.MappedListIterable(changedOffsets, t1._eval$1("Future<~>(1)")._as(new A.AsynchronousIndexedDbFileSystem__write_closure(new A.AsynchronousIndexedDbFileSystem__write_writeBlock(blocks, fileId), writes)), t1._eval$1("MappedListIterable<1,Future<~>>")), type$.void), $async$_write$2);
+              return A._asyncAwait(A.Future_wait(new A.MappedListIterable(changedOffsets, t1._eval$1("Future<~>(1)")._as(new A._IndexedDbTransaction_write_closure(new A._IndexedDbTransaction_write_writeBlock($async$self, fileId), writes)), t1._eval$1("MappedListIterable<1,Future<~>>")), type$.void), $async$write$2);
             case 3:
               // returning from await.
               $async$goto = writes.newFileLength !== A._asInt(file.length) ? 4 : 5;
               break;
             case 4:
               // then
-              fileCursor = new A._CursorReader(A._asJSObject(A._asJSObject(transaction.objectStore("files")).openCursor(fileId)), type$._CursorReader_JSObject);
+              fileCursor = new A._CursorReader(A._asJSObject($async$self._files.openCursor(fileId)), type$._CursorReader_JSObject);
               $async$goto = 6;
-              return A._asyncAwait(fileCursor.moveNext$0(), $async$_write$2);
+              return A._asyncAwait(fileCursor.moveNext$0(), $async$write$2);
             case 6:
               // returning from await.
               $async$goto = 7;
-              return A._asyncAwait(A.CompleteIdbRequest_complete(A._asJSObject(fileCursor.get$current().update({name: A._asString(file.name), length: writes.newFileLength})), type$.nullable_Object), $async$_write$2);
+              return A._asyncAwait(A.CompleteIdbRequest_complete(A._asJSObject(fileCursor.get$current().update({name: A._asString(file.name), length: writes.newFileLength})), type$.nullable_Object), $async$write$2);
             case 7:
               // returning from await.
             case 5:
@@ -26356,12 +26772,12 @@
               return A._asyncReturn(null, $async$completer);
           }
       });
-      return A._asyncStartSync($async$_write$2, $async$completer);
+      return A._asyncStartSync($async$write$2, $async$completer);
     },
     truncate$2(_, fileId, $length) {
       var $async$goto = 0,
         $async$completer = A._makeAsyncAwaitCompleter(type$.void),
-        $async$self = this, transaction, files, blocks, file, fileCursor, t1;
+        $async$self = this, file, fileCursor;
       var $async$truncate$2 = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
         if ($async$errorCode === 1)
           return A._asyncRethrow($async$result, $async$completer);
@@ -26369,13 +26785,10 @@
           switch ($async$goto) {
             case 0:
               // Function start
-              t1 = $async$self._indexed_db$_database;
-              t1.toString;
-              transaction = A._asJSObject(t1.transaction($.$get$AsynchronousIndexedDbFileSystem__storesJs(), "readwrite"));
-              files = A._asJSObject(transaction.objectStore("files"));
-              blocks = A._asJSObject(transaction.objectStore("blocks"));
+              if (($async$self._indexed_db$_completer.future._state & 30) !== 0)
+                A.throwExpression(A.StateError$("IDB transaction already completed"));
               $async$goto = 2;
-              return A._asyncAwait($async$self._readFile$2(transaction, fileId), $async$truncate$2);
+              return A._asyncAwait($async$self._readFile$1(fileId), $async$truncate$2);
             case 2:
               // returning from await.
               file = $async$result;
@@ -26384,12 +26797,12 @@
             case 3:
               // then
               $async$goto = 5;
-              return A._asyncAwait(A.CompleteIdbRequest_complete(A._asJSObject(blocks.delete($async$self._rangeOverFile$2$startOffset(fileId, B.JSInt_methods._tdivFast$1($length, 4096) * 4096))), type$.nullable_Object), $async$truncate$2);
+              return A._asyncAwait(A.CompleteIdbRequest_complete(A._asJSObject($async$self._blocks.delete($async$self._rangeOverFile$2$startOffset(fileId, B.JSInt_methods._tdivFast$1($length, 4096) * 4096))), type$.nullable_Object), $async$truncate$2);
             case 5:
               // returning from await.
             case 4:
               // join
-              fileCursor = new A._CursorReader(A._asJSObject(files.openCursor(fileId)), type$._CursorReader_JSObject);
+              fileCursor = new A._CursorReader(A._asJSObject($async$self._files.openCursor(fileId)), type$._CursorReader_JSObject);
               $async$goto = 6;
               return A._asyncAwait(fileCursor.moveNext$0(), $async$truncate$2);
             case 6:
@@ -26407,7 +26820,7 @@
     deleteFile$1(id) {
       var $async$goto = 0,
         $async$completer = A._makeAsyncAwaitCompleter(type$.void),
-        $async$self = this, transaction, blocksRange, t1;
+        $async$self = this, t1;
       var $async$deleteFile$1 = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
         if ($async$errorCode === 1)
           return A._asyncRethrow($async$result, $async$completer);
@@ -26415,13 +26828,11 @@
           switch ($async$goto) {
             case 0:
               // Function start
-              t1 = $async$self._indexed_db$_database;
-              t1.toString;
-              transaction = A._asJSObject(t1.transaction(A._setArrayType(["files", "blocks"], type$.JSArray_String), "readwrite"));
-              blocksRange = $async$self._rangeOverFile$3$endOffsetInclusive$startOffset(id, 9007199254740992, 0);
+              if (($async$self._indexed_db$_completer.future._state & 30) !== 0)
+                A.throwExpression(A.StateError$("IDB transaction already completed"));
               t1 = type$.nullable_Object;
               $async$goto = 2;
-              return A._asyncAwait(A.Future_wait(A._setArrayType([A.CompleteIdbRequest_complete(A._asJSObject(A._asJSObject(transaction.objectStore("blocks")).delete(blocksRange)), t1), A.CompleteIdbRequest_complete(A._asJSObject(A._asJSObject(transaction.objectStore("files")).delete(id)), t1)], type$.JSArray_Future_void), type$.void), $async$deleteFile$1);
+              return A._asyncAwait(A.Future_wait(A._setArrayType([A.CompleteIdbRequest_complete(A._asJSObject($async$self._blocks.delete($async$self._rangeOverFile$3$endOffsetInclusive$startOffset(id, 9007199254740992, 0))), t1), A.CompleteIdbRequest_complete(A._asJSObject($async$self._files.delete(id)), t1)], type$.JSArray_Future_void), type$.void), $async$deleteFile$1);
             case 2:
               // returning from await.
               // implicit return
@@ -26431,19 +26842,23 @@
       return A._asyncStartSync($async$deleteFile$1, $async$completer);
     }
   };
-  A.AsynchronousIndexedDbFileSystem_open_closure.prototype = {
-    call$1(change) {
-      var database;
-      A._asJSObject(change);
-      database = A._asJSObject(this.openRequest.result);
-      if (A._asInt(change.oldVersion) === 0) {
-        A._asJSObject(A._asJSObject(database.createObjectStore("files", {autoIncrement: true})).createIndex("fileName", "name", {unique: true}));
-        A._asJSObject(database.createObjectStore("blocks"));
-      }
+  A._IndexedDbTransaction_closure.prototype = {
+    call$0() {
+      this.$this._indexed_db$_completer.complete$0();
     },
-    $signature: 9
+    $signature: 3
   };
-  A.AsynchronousIndexedDbFileSystem__readFile_closure.prototype = {
+  A._IndexedDbTransaction_closure0.prototype = {
+    call$0() {
+      var t1 = this.$this,
+        t2 = A._asJSObjectQ(t1._transaction.error);
+      if (t2 == null)
+        t2 = A._asJSObject(new init.G.DOMException("IDB transaction error"));
+      t1._indexed_db$_completer.completeError$1(t2);
+    },
+    $signature: 3
+  };
+  A._IndexedDbTransaction__readFile_closure.prototype = {
     call$1(value) {
       A._asJSObjectQ(value);
       if (value == null)
@@ -26451,48 +26866,16 @@
       else
         return value;
     },
-    $signature: 84
+    $signature: 87
   };
-  A.AsynchronousIndexedDbFileSystem_readFully_closure.prototype = {
-    call$0() {
-      var $async$goto = 0,
-        $async$completer = A._makeAsyncAwaitCompleter(type$.void),
-        $async$self = this, t1, data;
-      var $async$call$0 = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
-        if ($async$errorCode === 1)
-          return A._asyncRethrow($async$result, $async$completer);
-        for (;;)
-          switch ($async$goto) {
-            case 0:
-              // Function start
-              t1 = $async$self.row;
-              $async$goto = A.JSAnyUtilityExtension_instanceOfString(t1.value, "Blob") ? 2 : 4;
-              break;
-            case 2:
-              // then
-              $async$goto = 5;
-              return A._asyncAwait(A.ReadBlob_byteBuffer(A._asJSObject(t1.value)), $async$call$0);
-            case 5:
-              // returning from await.
-              // goto join
-              $async$goto = 3;
-              break;
-            case 4:
-              // else
-              $async$result = type$.NativeArrayBuffer._as(t1.value);
-            case 3:
-              // join
-              data = $async$result;
-              B.NativeUint8List_methods.setAll$2($async$self.result, $async$self.rowOffset, J.asUint8List$2$x(data, 0, $async$self.length));
-              // implicit return
-              return A._asyncReturn(null, $async$completer);
-          }
-      });
-      return A._asyncStartSync($async$call$0, $async$completer);
+  A._IndexedDbTransaction_startRead_completeRead.prototype = {
+    call$1(data) {
+      var t1 = this.result;
+      t1.setAll$2(t1, this.rowOffset, J.asUint8List$2$x(type$.ByteBuffer._as(data), 0, this.length));
     },
-    $signature: 2
+    $signature: 88
   };
-  A.AsynchronousIndexedDbFileSystem__write_writeBlock.prototype = {
+  A._IndexedDbTransaction_write_writeBlock.prototype = {
     call$2(blockStart, block) {
       var $async$goto = 0,
         $async$completer = A._makeAsyncAwaitCompleter(type$.void),
@@ -26504,7 +26887,7 @@
           switch ($async$goto) {
             case 0:
               // Function start
-              t1 = $async$self.blocks;
+              t1 = $async$self.$this._blocks;
               _this = $async$self.fileId;
               t2 = type$.JSArray_double;
               $async$goto = 2;
@@ -26539,9 +26922,9 @@
       });
       return A._asyncStartSync($async$call$2, $async$completer);
     },
-    $signature: 85
+    $signature: 89
   };
-  A.AsynchronousIndexedDbFileSystem__write_closure.prototype = {
+  A._IndexedDbTransaction_write_closure.prototype = {
     call$1(offset) {
       var t1;
       A._asInt(offset);
@@ -26549,7 +26932,7 @@
       t1.toString;
       return this.writeBlock.call$2(offset, t1);
     },
-    $signature: 86
+    $signature: 90
   };
   A._FileWriteRequest.prototype = {
     _updateBlock$3(blockOffset, offsetInBlock, data) {
@@ -26584,7 +26967,7 @@
         B.NativeUint8List_methods.setAll$2(block, 0, J.asUint8List$2$x(B.NativeUint8List_methods.get$buffer(t1), t1.byteOffset + t3, Math.min(4096, t2 - t3)));
       return block;
     },
-    $signature: 120
+    $signature: 125
   };
   A._OffsetAndBuffer.prototype = {};
   A.IndexedDbFileSystem.prototype = {
@@ -26593,19 +26976,47 @@
       if (_this._isClosing || _this._asynchronous._indexed_db$_database == null)
         A.throwExpression(A.VfsException$(10));
       if (work.insertInto$1(_this._pendingWork)) {
-        _this._startWorkingIfNeeded$0();
+        _this._startWorkingIfNeeded$1$isImplicit(true);
         return work.completer.future;
       } else
         return A.Future_Future$value(null, type$.void);
     },
-    _startWorkingIfNeeded$0() {
-      var t1, item, _this = this;
-      if (_this._currentWorkItem == null && !_this._pendingWork.get$isEmpty(0)) {
-        t1 = _this._pendingWork;
-        item = _this._currentWorkItem = t1.get$first(0);
-        t1.remove$1(0, item);
-        item.completer.complete$1(A.Future_Future(item.get$run(), type$.void).whenComplete$1(new A.IndexedDbFileSystem__startWorkingIfNeeded_closure(_this)));
-      }
+    _startWorkingIfNeeded$1$isImplicit(isImplicit) {
+      var $async$goto = 0,
+        $async$completer = A._makeAsyncAwaitCompleter(type$.void),
+        $async$returnValue, $async$self = this, t1, items;
+      var $async$_startWorkingIfNeeded$1$isImplicit = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
+        if ($async$errorCode === 1)
+          return A._asyncRethrow($async$result, $async$completer);
+        for (;;)
+          switch ($async$goto) {
+            case 0:
+              // Function start
+              if (isImplicit && !$async$self._writeAutomatically) {
+                // goto return
+                $async$goto = 1;
+                break;
+              }
+              $async$goto = !$async$self._isWorking && !$async$self._pendingWork.get$isEmpty(0) ? 3 : 4;
+              break;
+            case 3:
+              // then
+              $async$self._isWorking = true;
+              t1 = $async$self._pendingWork;
+              items = A.List_List$_of(t1, t1.$ti._eval$1("Iterable.E"));
+              t1.clear$0(0);
+              $async$goto = 5;
+              return A._asyncAwait($async$self._asynchronous._performWrites$1(items).whenComplete$1(new A.IndexedDbFileSystem__startWorkingIfNeeded_closure($async$self, items, isImplicit)), $async$_startWorkingIfNeeded$1$isImplicit);
+            case 5:
+              // returning from await.
+            case 4:
+              // join
+            case 1:
+              // return
+              return A._asyncReturn($async$returnValue, $async$completer);
+          }
+      });
+      return A._asyncStartSync($async$_startWorkingIfNeeded$1$isImplicit, $async$completer);
     },
     close$0() {
       var $async$goto = 0,
@@ -26619,8 +27030,9 @@
             case 0:
               // Function start
               if (!$async$self._isClosing) {
-                result = $async$self._submitWork$1(new A._FunctionWorkItem(type$.void_Function._as($async$self._asynchronous.get$close()), new A._SyncCompleter(new A._Future($.Zone__current, type$._Future_void), type$._SyncCompleter_void)));
+                result = $async$self._submitWork$1(new A._FunctionWorkItem(type$.Future_void_Function__IndexedDbTransaction._as(new A.IndexedDbFileSystem_close_closure()), new A._SyncCompleter(new A._Future($.Zone__current, type$._Future_void), type$._SyncCompleter_void)));
                 $async$self._isClosing = true;
+                $async$self._startWorkingIfNeeded$1$isImplicit(false);
                 $async$returnValue = result;
                 // goto return
                 $async$goto = 1;
@@ -26641,11 +27053,11 @@
       });
       return A._asyncStartSync($async$close$0, $async$completer);
     },
-    _fileId$1(path) {
+    _fileId$2(tx, path) {
       var $async$goto = 0,
         $async$completer = A._makeAsyncAwaitCompleter(type$.int),
         $async$returnValue, $async$self = this, t2, t1;
-      var $async$_fileId$1 = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
+      var $async$_fileId$2 = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
         if ($async$errorCode === 1)
           return A._asyncRethrow($async$result, $async$completer);
         for (;;)
@@ -26669,7 +27081,7 @@
             case 5:
               // else
               $async$goto = 6;
-              return A._asyncAwait($async$self._asynchronous.fileIdForPath$1(path), $async$_fileId$1);
+              return A._asyncAwait(tx.fileIdForPath$1(path), $async$_fileId$2);
             case 6:
               // returning from await.
               t2 = $async$result;
@@ -26686,12 +27098,12 @@
               return A._asyncReturn($async$returnValue, $async$completer);
           }
       });
-      return A._asyncStartSync($async$_fileId$1, $async$completer);
+      return A._asyncStartSync($async$_fileId$2, $async$completer);
     },
     _readFiles$0() {
       var $async$goto = 0,
         $async$completer = A._makeAsyncAwaitCompleter(type$.void),
-        $async$self = this, t2, t3, t4, t5, $name, fileId, buffer, data, t6, t1, rawFiles;
+        $async$self = this, additionalReads;
       var $async$_readFiles$0 = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
         if ($async$errorCode === 1)
           return A._asyncRethrow($async$result, $async$completer);
@@ -26699,43 +27111,15 @@
           switch ($async$goto) {
             case 0:
               // Function start
-              t1 = $async$self._asynchronous;
+              additionalReads = A._setArrayType([], type$.JSArray_Future_void);
               $async$goto = 2;
-              return A._asyncAwait(t1.listFiles$0(), $async$_readFiles$0);
+              return A._asyncAwait($async$self._asynchronous._runTransaction$2$mode(new A.IndexedDbFileSystem__readFiles_closure($async$self, additionalReads), "readonly"), $async$_readFiles$0);
             case 2:
               // returning from await.
-              rawFiles = $async$result;
-              $async$self._knownFileIds.addAll$1(0, rawFiles);
-              t2 = rawFiles.get$entries(), t2 = t2.get$iterator(t2), t3 = $async$self._memory.fileData, t4 = type$.Uint8Buffer._eval$1("Iterable<TypedDataBuffer.E>");
-            case 3:
-              // for condition
-              if (!t2.moveNext$0()) {
-                // goto after for
-                $async$goto = 4;
-                break;
-              }
-              t5 = t2.get$current();
-              $name = t5.key;
-              fileId = t5.value;
-              buffer = new A.Uint8Buffer(new Uint8Array(0), 0);
-              $async$goto = 5;
-              return A._asyncAwait(t1.readFully$1(fileId), $async$_readFiles$0);
-            case 5:
-              // returning from await.
-              data = $async$result;
-              t5 = data.length;
-              buffer.set$length(0, t5);
-              t4._as(data);
-              t6 = buffer._typed_buffer$_length;
-              if (t5 > t6)
-                A.throwExpression(A.RangeError$range(t5, 0, t6, null, null));
-              B.NativeUint8List_methods.setRange$4(buffer._typed_buffer$_buffer, 0, t5, data, 0);
-              t3.$indexSet(0, $name, buffer);
-              // goto for condition
               $async$goto = 3;
-              break;
-            case 4:
-              // after for
+              return A._asyncAwait(A.FutureIterable_get_wait(additionalReads, type$.void), $async$_readFiles$0);
+            case 3:
+              // returning from await.
               // implicit return
               return A._asyncReturn(null, $async$completer);
           }
@@ -26774,11 +27158,90 @@
   };
   A.IndexedDbFileSystem__startWorkingIfNeeded_closure.prototype = {
     call$0() {
-      var t1 = this.$this;
-      t1._currentWorkItem = null;
-      t1._startWorkingIfNeeded$0();
+      var t2, t3, _i, t4, t5,
+        t1 = this.$this;
+      t1._isWorking = false;
+      for (t2 = this.items, t3 = t2.length, _i = 0; _i < t2.length; t2.length === t3 || (0, A.throwConcurrentModificationError)(t2), ++_i) {
+        t4 = t2[_i].completer;
+        t5 = t4.future;
+        if ((t5._state & 30) !== 0)
+          A.throwExpression(A.StateError$("Future already completed"));
+        t5._complete$1(t4.$ti._eval$1("1/")._as(null));
+      }
+      t1._startWorkingIfNeeded$1$isImplicit(this.isImplicit);
     },
-    $signature: 5
+    $signature: 3
+  };
+  A.IndexedDbFileSystem_close_closure.prototype = {
+    call$1(tx) {
+      return this.$call$body$IndexedDbFileSystem_close_closure(type$._IndexedDbTransaction._as(tx));
+    },
+    $call$body$IndexedDbFileSystem_close_closure(tx) {
+      var $async$goto = 0,
+        $async$completer = A._makeAsyncAwaitCompleter(type$.void);
+      var $async$call$1 = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
+        if ($async$errorCode === 1)
+          return A._asyncRethrow($async$result, $async$completer);
+        for (;;)
+          switch ($async$goto) {
+            case 0:
+              // Function start
+              tx.closeAfterwards = true;
+              // implicit return
+              return A._asyncReturn(null, $async$completer);
+          }
+      });
+      return A._asyncStartSync($async$call$1, $async$completer);
+    },
+    $signature: 18
+  };
+  A.IndexedDbFileSystem__readFiles_closure.prototype = {
+    call$1(tx) {
+      var $async$goto = 0,
+        $async$completer = A._makeAsyncAwaitCompleter(type$.void),
+        $async$self = this, t2, t3, t4, rawFiles, t1, $async$temp1, $async$temp2;
+      var $async$call$1 = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
+        if ($async$errorCode === 1)
+          return A._asyncRethrow($async$result, $async$completer);
+        for (;;)
+          switch ($async$goto) {
+            case 0:
+              // Function start
+              $async$goto = 2;
+              return A._asyncAwait(tx.listFiles$0(), $async$call$1);
+            case 2:
+              // returning from await.
+              rawFiles = $async$result;
+              t1 = $async$self.$this;
+              t1._knownFileIds.addAll$1(0, rawFiles);
+              t2 = rawFiles.get$entries(), t2 = t2.get$iterator(t2), t3 = $async$self.additionalReads, t1 = t1._memory.fileData;
+            case 3:
+              // for condition
+              if (!t2.moveNext$0()) {
+                // goto after for
+                $async$goto = 4;
+                break;
+              }
+              t4 = t2.get$current();
+              $async$temp1 = t1;
+              $async$temp2 = t4.key;
+              $async$goto = 5;
+              return A._asyncAwait(tx.startRead$2(t4.value, t3), $async$call$1);
+            case 5:
+              // returning from await.
+              $async$temp1.$indexSet(0, $async$temp2, $async$result);
+              // goto for condition
+              $async$goto = 3;
+              break;
+            case 4:
+              // after for
+              // implicit return
+              return A._asyncReturn(null, $async$completer);
+          }
+      });
+      return A._asyncStartSync($async$call$1, $async$completer);
+    },
+    $signature: 18
   };
   A._IndexedDbFile.prototype = {
     xRead$2(target, fileOffset) {
@@ -26786,6 +27249,9 @@
     },
     get$xDeviceCharacteristics() {
       return 0;
+    },
+    get$xSectorSize() {
+      return 4096;
     },
     xCheckReservedLock$0() {
       return this.memoryFile._lockMode >= 2 ? 1 : 0;
@@ -26801,6 +27267,9 @@
     },
     xSync$1(flags) {
     },
+    xFileControl$2(op, ptr) {
+      return 12;
+    },
     xTruncate$1(size) {
       var _this = this,
         t1 = _this.vfs;
@@ -26808,7 +27277,7 @@
         A.throwExpression(A.VfsException$(10));
       _this.memoryFile.xTruncate$1(size);
       if (!t1._inMemoryOnlyFiles.contains$1(0, _this.path))
-        t1._submitWork$1(new A._FunctionWorkItem(type$.void_Function._as(new A._IndexedDbFile_xTruncate_closure(_this, size)), new A._SyncCompleter(new A._Future($.Zone__current, type$._Future_void), type$._SyncCompleter_void)));
+        t1._submitWork$1(new A._FunctionWorkItem(type$.Future_void_Function__IndexedDbTransaction._as(new A._IndexedDbFile_xTruncate_closure(_this, size)), new A._SyncCompleter(new A._Future($.Zone__current, type$._Future_void), type$._SyncCompleter_void)));
     },
     xUnlock$1(mode) {
       this.memoryFile._lockMode = mode;
@@ -26836,14 +27305,18 @@
       B.JSArray_methods.add$1(t3, new A._OffsetAndBuffer(fileOffset, copy));
       t1._submitWork$1(new A._WriteFileWorkItem(t1, t2, previousList, t3, new A._SyncCompleter(new A._Future(t4, type$._Future_void), type$._SyncCompleter_void)));
     },
-    $isVirtualFileSystemFile: 1
+    $isVirtualFileSystemFile: 1,
+    $isVirtualFileSystemFileV1: 1
   };
   A._IndexedDbFile_xTruncate_closure.prototype = {
-    call$0() {
+    call$1(tx) {
+      return this.$call$body$_IndexedDbFile_xTruncate_closure(type$._IndexedDbTransaction._as(tx));
+    },
+    $call$body$_IndexedDbFile_xTruncate_closure(tx) {
       var $async$goto = 0,
         $async$completer = A._makeAsyncAwaitCompleter(type$.void),
-        $async$returnValue, $async$self = this, t1, t2, $async$temp1;
-      var $async$call$0 = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
+        $async$returnValue, $async$self = this, t1, $async$temp1;
+      var $async$call$1 = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
         if ($async$errorCode === 1)
           return A._asyncRethrow($async$result, $async$completer);
         for (;;)
@@ -26851,10 +27324,9 @@
             case 0:
               // Function start
               t1 = $async$self.$this;
-              t2 = t1.vfs;
-              $async$temp1 = t2._asynchronous;
+              $async$temp1 = tx;
               $async$goto = 3;
-              return A._asyncAwait(t2._fileId$1(t1.path), $async$call$0);
+              return A._asyncAwait(t1.vfs._fileId$2(tx, t1.path), $async$call$1);
             case 3:
               // returning from await.
               $async$returnValue = $async$temp1.truncate$2(0, $async$result, $async$self.size);
@@ -26866,9 +27338,9 @@
               return A._asyncReturn($async$returnValue, $async$completer);
           }
       });
-      return A._asyncStartSync($async$call$0, $async$completer);
+      return A._asyncStartSync($async$call$1, $async$completer);
     },
-    $signature: 2
+    $signature: 18
   };
   A._IndexedDbWorkItem.prototype = {
     insertInto$1(pending) {
@@ -26879,8 +27351,8 @@
     }
   };
   A._FunctionWorkItem.prototype = {
-    run$0() {
-      return this.work.call$0();
+    run$1(tx) {
+      return this.work.call$1(tx);
     }
   };
   A._DeleteFileWorkItem.prototype = {
@@ -26918,11 +27390,11 @@
       pending._insertBefore$3$updateFirst(pending._first, this, false);
       return true;
     },
-    run$0() {
+    run$1(tx) {
       var $async$goto = 0,
         $async$completer = A._makeAsyncAwaitCompleter(type$.void),
         $async$self = this, t1, t2, id;
-      var $async$run$0 = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
+      var $async$run$1 = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
         if ($async$errorCode === 1)
           return A._asyncRethrow($async$result, $async$completer);
         for (;;)
@@ -26932,40 +27404,39 @@
               t1 = $async$self.fileSystem;
               t2 = $async$self.path;
               $async$goto = 2;
-              return A._asyncAwait(t1._fileId$1(t2), $async$run$0);
+              return A._asyncAwait(t1._fileId$2(tx, t2), $async$run$1);
             case 2:
               // returning from await.
               id = $async$result;
               t1._knownFileIds.remove$1(0, t2);
               $async$goto = 3;
-              return A._asyncAwait(t1._asynchronous.deleteFile$1(id), $async$run$0);
+              return A._asyncAwait(tx.deleteFile$1(id), $async$run$1);
             case 3:
               // returning from await.
               // implicit return
               return A._asyncReturn(null, $async$completer);
           }
       });
-      return A._asyncStartSync($async$run$0, $async$completer);
+      return A._asyncStartSync($async$run$1, $async$completer);
     }
   };
   A._CreateFileWorkItem.prototype = {
-    run$0() {
+    run$1(tx) {
       var $async$goto = 0,
         $async$completer = A._makeAsyncAwaitCompleter(type$.void),
-        $async$self = this, t1, t2, $async$temp1, $async$temp2;
-      var $async$run$0 = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
+        $async$self = this, t1, $async$temp1, $async$temp2;
+      var $async$run$1 = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
         if ($async$errorCode === 1)
           return A._asyncRethrow($async$result, $async$completer);
         for (;;)
           switch ($async$goto) {
             case 0:
               // Function start
-              t1 = $async$self.fileSystem;
-              t2 = $async$self.path;
-              $async$temp1 = t1._knownFileIds;
-              $async$temp2 = t2;
+              t1 = $async$self.path;
+              $async$temp1 = $async$self.fileSystem._knownFileIds;
+              $async$temp2 = t1;
               $async$goto = 2;
-              return A._asyncAwait(t1._asynchronous.createFile$1(t2), $async$run$0);
+              return A._asyncAwait(tx.createFile$1(t1), $async$run$1);
             case 2:
               // returning from await.
               $async$temp1.$indexSet(0, $async$temp2, $async$result);
@@ -26973,7 +27444,7 @@
               return A._asyncReturn(null, $async$completer);
           }
       });
-      return A._asyncStartSync($async$run$0, $async$completer);
+      return A._asyncStartSync($async$run$1, $async$completer);
     }
   };
   A._WriteFileWorkItem.prototype = {
@@ -26998,11 +27469,11 @@
       pending._insertBefore$3$updateFirst(pending._first, this, false);
       return true;
     },
-    run$0() {
+    run$1(tx) {
       var $async$goto = 0,
         $async$completer = A._makeAsyncAwaitCompleter(type$.void),
         $async$self = this, t2, _i, write, t1, request, $async$temp1;
-      var $async$run$0 = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
+      var $async$run$1 = A._wrapJsFunctionForAsync(function($async$errorCode, $async$result) {
         if ($async$errorCode === 1)
           return A._asyncRethrow($async$result, $async$completer);
         for (;;)
@@ -27015,21 +27486,20 @@
                 write = t1[_i];
                 request.addWrite$2(write.offset, write.buffer);
               }
-              t1 = $async$self.fileSystem;
-              $async$temp1 = t1._asynchronous;
+              $async$temp1 = tx;
               $async$goto = 3;
-              return A._asyncAwait(t1._fileId$1($async$self.path), $async$run$0);
+              return A._asyncAwait($async$self.fileSystem._fileId$2(tx, $async$self.path), $async$run$1);
             case 3:
               // returning from await.
               $async$goto = 2;
-              return A._asyncAwait($async$temp1._write$2($async$result, request), $async$run$0);
+              return A._asyncAwait($async$temp1.write$2($async$result, request), $async$run$1);
             case 2:
               // returning from await.
               // implicit return
               return A._asyncReturn(null, $async$completer);
           }
       });
-      return A._asyncStartSync($async$run$0, $async$completer);
+      return A._asyncStartSync($async$run$1, $async$completer);
     }
   };
   A.FileType.prototype = {
@@ -27039,7 +27509,7 @@
   };
   A.SimpleOpfsFileSystem.prototype = {
     _requireFiles$0() {
-      var _0_0 = this._files;
+      var _0_0 = this._simple_opfs$_files;
       if (_0_0 != null)
         return _0_0;
       throw A.wrapException(A.StateError$("VFS closed"));
@@ -27082,13 +27552,13 @@
     xSleep$1(duration) {
     },
     close$0() {
-      var t1 = this._files;
+      var t1 = this._simple_opfs$_files;
       if (t1 != null) {
         t1.metaHandle.close();
         t1.database.close();
         t1.journal.close();
       }
-      this._files = null;
+      this._simple_opfs$_files = null;
     },
     open$2$readWriteUnsafe(root, readWriteUnsafe) {
       var $async$goto = 0,
@@ -27119,7 +27589,7 @@
             case 4:
               // returning from await.
               journal = $async$result;
-              files = $async$self._files = new A._OpfsFiles(new Uint8Array(2), meta, database, journal);
+              files = $async$self._simple_opfs$_files = new A._OpfsFiles(new Uint8Array(2), meta, database, journal);
               if (t2 === 0) {
                 files.markExists$2(B.FileType_Gi5, A._asInt(database.getSize()) > 0);
                 files.markExists$2(B.FileType_Pwc, A._asInt(journal.getSize()) > 0);
@@ -27165,7 +27635,7 @@
       });
       return A._asyncStartSync($async$call$1, $async$completer);
     },
-    $signature: 88
+    $signature: 92
   };
   A._SimpleOpfsFile.prototype = {
     readInto$2(buffer, offset) {
@@ -27266,25 +27736,25 @@
     call$1(p) {
       return A._asInt(this.$this.sqlite3.sqlite3changeset_finalize(A._asInt(p)));
     },
-    $signature: 10
+    $signature: 4
   };
   A.WasmBindings_closure0.prototype = {
     call$1(p) {
       return this.$this.sqlite3.sqlite3session_delete(A._asInt(p));
     },
-    $signature: 10
+    $signature: 4
   };
   A.WasmBindings_closure1.prototype = {
     call$1(p) {
       return A._asInt(this.$this.sqlite3.sqlite3_close_v2(A._asInt(p)));
     },
-    $signature: 10
+    $signature: 4
   };
   A.WasmBindings_closure2.prototype = {
     call$1(p) {
       return A._asInt(this.$this.sqlite3.sqlite3_finalize(A._asInt(p)));
     },
-    $signature: 10
+    $signature: 4
   };
   A.Chain.prototype = {
     toTrace$0() {
@@ -27303,13 +27773,13 @@
     call$1(line) {
       return A._asString(line).length !== 0;
     },
-    $signature: 3
+    $signature: 2
   };
   A.Chain_toTrace_closure.prototype = {
     call$1(trace) {
       return type$.Trace._as(trace).get$frames();
     },
-    $signature: 89
+    $signature: 93
   };
   A.Chain_toString_closure0.prototype = {
     call$1(trace) {
@@ -27317,13 +27787,13 @@
         t2 = A._arrayInstanceType(t1);
       return new A.MappedListIterable(t1, t2._eval$1("int(1)")._as(new A.Chain_toString__closure0()), t2._eval$1("MappedListIterable<1,int>")).fold$1$2(0, 0, B.CONSTANT, type$.int);
     },
-    $signature: 90
+    $signature: 94
   };
   A.Chain_toString__closure0.prototype = {
     call$1(frame) {
       return type$.Frame._as(frame).get$location().length;
     },
-    $signature: 36
+    $signature: 38
   };
   A.Chain_toString_closure.prototype = {
     call$1(trace) {
@@ -27331,14 +27801,14 @@
         t2 = A._arrayInstanceType(t1);
       return new A.MappedListIterable(t1, t2._eval$1("String(1)")._as(new A.Chain_toString__closure(this.longest)), t2._eval$1("MappedListIterable<1,String>")).join$0(0);
     },
-    $signature: 92
+    $signature: 96
   };
   A.Chain_toString__closure.prototype = {
     call$1(frame) {
       type$.Frame._as(frame);
       return B.JSString_methods.padRight$1(frame.get$location(), this.longest) + "  " + A.S(frame.get$member()) + "\n";
     },
-    $signature: 22
+    $signature: 24
   };
   A.Frame.prototype = {
     get$library() {
@@ -27400,7 +27870,7 @@
       line = t1 > 1 ? A.int_parse(lineAndColumn[1], _null) : _null;
       return new A.Frame(uri, line, t1 > 2 ? A.int_parse(lineAndColumn[2], _null) : _null, member);
     },
-    $signature: 12
+    $signature: 13
   };
   A.Frame_Frame$parseV8_closure.prototype = {
     call$0() {
@@ -27447,7 +27917,7 @@
       }
       return new A.UnparsedFrame(A._Uri__Uri(null, "unparsed", null, null), t1);
     },
-    $signature: 12
+    $signature: 13
   };
   A.Frame_Frame$parseV8_closure_parseJsLocation.prototype = {
     call$2($location, member) {
@@ -27483,7 +27953,7 @@
       columnMatch = t1[3];
       return new A.Frame(uri, line, columnMatch != null ? A.int_parse(columnMatch, _null) : _null, member);
     },
-    $signature: 95
+    $signature: 99
   };
   A.Frame_Frame$_parseFirefoxEval_closure.prototype = {
     call$0() {
@@ -27510,7 +27980,7 @@
       line = A.int_parse(t1, _null);
       return new A.Frame(uri, line, _null, member.length === 0 || member === "anonymous" ? "<fn>" : member);
     },
-    $signature: 12
+    $signature: 13
   };
   A.Frame_Frame$parseFirefox_closure.prototype = {
     call$0() {
@@ -27590,7 +28060,7 @@
       }
       return new A.UnparsedFrame(A._Uri__Uri(_null, "unparsed", _null, _null), t1);
     },
-    $signature: 12
+    $signature: 13
   };
   A.Frame_Frame$parseFriendly_closure.prototype = {
     call$0() {
@@ -27638,7 +28108,7 @@
         return A.ioore(t1, 4);
       return new A.Frame(uri, line, column, t1[4]);
     },
-    $signature: 12
+    $signature: 13
   };
   A.LazyTrace.prototype = {
     get$_lazy_trace$_trace() {
@@ -27676,44 +28146,44 @@
     call$0() {
       return A.Trace_Trace$parse(this.trace.toString$0(0));
     },
-    $signature: 96
+    $signature: 100
   };
   A.Trace__parseVM_closure.prototype = {
     call$1(line) {
       return A._asString(line).length !== 0;
     },
-    $signature: 3
+    $signature: 2
   };
   A.Trace$parseV8_closure.prototype = {
     call$1(line) {
       return !B.JSString_methods.startsWith$1(A._asString(line), $.$get$_v8TraceLine());
     },
-    $signature: 3
+    $signature: 2
   };
   A.Trace$parseJSCore_closure.prototype = {
     call$1(line) {
       return A._asString(line) !== "\tat ";
     },
-    $signature: 3
+    $signature: 2
   };
   A.Trace$parseFirefox_closure.prototype = {
     call$1(line) {
       A._asString(line);
       return line.length !== 0 && line !== "[native code]";
     },
-    $signature: 3
+    $signature: 2
   };
   A.Trace$parseFriendly_closure.prototype = {
     call$1(line) {
       return !B.JSString_methods.startsWith$1(A._asString(line), "=====");
     },
-    $signature: 3
+    $signature: 2
   };
   A.Trace_toString_closure0.prototype = {
     call$1(frame) {
       return type$.Frame._as(frame).get$location().length;
     },
-    $signature: 36
+    $signature: 38
   };
   A.Trace_toString_closure.prototype = {
     call$1(frame) {
@@ -27722,7 +28192,7 @@
         return frame.toString$0(0) + "\n";
       return B.JSString_methods.padRight$1(frame.get$location(), this.longest) + "  " + A.S(frame.get$member()) + "\n";
     },
-    $signature: 22
+    $signature: 24
   };
   A.UnparsedFrame.prototype = {
     toString$0(_) {
@@ -28055,48 +28525,49 @@
       _instance_2_u = hunkHelpers._instance_2u,
       _instance_1_i = hunkHelpers._instance_1i,
       _instance_1_u = hunkHelpers._instance_1u;
-    _static_2(J, "_interceptors_JSArray__compareAny$closure", "JSArray__compareAny", 97);
-    _static_1(A, "async__AsyncRun__scheduleImmediateJsOverride$closure", "_AsyncRun__scheduleImmediateJsOverride", 16);
-    _static_1(A, "async__AsyncRun__scheduleImmediateWithSetImmediate$closure", "_AsyncRun__scheduleImmediateWithSetImmediate", 16);
-    _static_1(A, "async__AsyncRun__scheduleImmediateWithTimer$closure", "_AsyncRun__scheduleImmediateWithTimer", 16);
+    _static_2(J, "_interceptors_JSArray__compareAny$closure", "JSArray__compareAny", 101);
+    _static_1(A, "async__AsyncRun__scheduleImmediateJsOverride$closure", "_AsyncRun__scheduleImmediateJsOverride", 9);
+    _static_1(A, "async__AsyncRun__scheduleImmediateWithSetImmediate$closure", "_AsyncRun__scheduleImmediateWithSetImmediate", 9);
+    _static_1(A, "async__AsyncRun__scheduleImmediateWithTimer$closure", "_AsyncRun__scheduleImmediateWithTimer", 9);
+    _static_1(A, "async___notNull$closure", "_notNull", 102);
     _static_0(A, "async___startMicrotaskLoop$closure", "_startMicrotaskLoop", 0);
-    _static_1(A, "async___nullDataHandler$closure", "_nullDataHandler", 14);
+    _static_1(A, "async___nullDataHandler$closure", "_nullDataHandler", 15);
     _static_2(A, "async___nullErrorHandler$closure", "_nullErrorHandler", 6);
     _static_0(A, "async___nullDoneHandler$closure", "_nullDoneHandler", 0);
-    _static(A, "async___rootHandleUncaughtError$closure", 5, null, ["call$5"], ["_rootHandleUncaughtError"], 98, 0);
+    _static(A, "async___rootHandleUncaughtError$closure", 5, null, ["call$5"], ["_rootHandleUncaughtError"], 103, 0);
     _static(A, "async___rootRun$closure", 4, null, ["call$1$4", "call$4"], ["_rootRun", function($self, $parent, zone, f) {
       return A._rootRun($self, $parent, zone, f, type$.dynamic);
-    }], 99, 0);
+    }], 104, 0);
     _static(A, "async___rootRunUnary$closure", 5, null, ["call$2$5", "call$5"], ["_rootRunUnary", function($self, $parent, zone, f, arg) {
       var t1 = type$.dynamic;
       return A._rootRunUnary($self, $parent, zone, f, arg, t1, t1);
-    }], 100, 0);
-    _static(A, "async___rootRunBinary$closure", 6, null, ["call$3$6"], ["_rootRunBinary"], 101, 0);
+    }], 105, 0);
+    _static(A, "async___rootRunBinary$closure", 6, null, ["call$3$6"], ["_rootRunBinary"], 106, 0);
     _static(A, "async___rootRegisterCallback$closure", 4, null, ["call$1$4", "call$4"], ["_rootRegisterCallback", function($self, $parent, zone, f) {
       return A._rootRegisterCallback($self, $parent, zone, f, type$.dynamic);
-    }], 102, 0);
+    }], 107, 0);
     _static(A, "async___rootRegisterUnaryCallback$closure", 4, null, ["call$2$4", "call$4"], ["_rootRegisterUnaryCallback", function($self, $parent, zone, f) {
       var t1 = type$.dynamic;
       return A._rootRegisterUnaryCallback($self, $parent, zone, f, t1, t1);
-    }], 103, 0);
+    }], 108, 0);
     _static(A, "async___rootRegisterBinaryCallback$closure", 4, null, ["call$3$4", "call$4"], ["_rootRegisterBinaryCallback", function($self, $parent, zone, f) {
       var t1 = type$.dynamic;
       return A._rootRegisterBinaryCallback($self, $parent, zone, f, t1, t1, t1);
-    }], 104, 0);
-    _static(A, "async___rootErrorCallback$closure", 5, null, ["call$5"], ["_rootErrorCallback"], 105, 0);
-    _static(A, "async___rootScheduleMicrotask$closure", 4, null, ["call$4"], ["_rootScheduleMicrotask"], 106, 0);
-    _static(A, "async___rootCreateTimer$closure", 5, null, ["call$5"], ["_rootCreateTimer"], 107, 0);
-    _static(A, "async___rootCreatePeriodicTimer$closure", 5, null, ["call$5"], ["_rootCreatePeriodicTimer"], 108, 0);
-    _static(A, "async___rootPrint$closure", 4, null, ["call$4"], ["_rootPrint"], 109, 0);
-    _static_1(A, "async___printToZone$closure", "_printToZone", 110);
-    _static(A, "async___rootFork$closure", 5, null, ["call$5"], ["_rootFork"], 111, 0);
+    }], 109, 0);
+    _static(A, "async___rootErrorCallback$closure", 5, null, ["call$5"], ["_rootErrorCallback"], 110, 0);
+    _static(A, "async___rootScheduleMicrotask$closure", 4, null, ["call$4"], ["_rootScheduleMicrotask"], 111, 0);
+    _static(A, "async___rootCreateTimer$closure", 5, null, ["call$5"], ["_rootCreateTimer"], 112, 0);
+    _static(A, "async___rootCreatePeriodicTimer$closure", 5, null, ["call$5"], ["_rootCreatePeriodicTimer"], 113, 0);
+    _static(A, "async___rootPrint$closure", 4, null, ["call$4"], ["_rootPrint"], 114, 0);
+    _static_1(A, "async___printToZone$closure", "_printToZone", 115);
+    _static(A, "async___rootFork$closure", 5, null, ["call$5"], ["_rootFork"], 116, 0);
     var _;
     _instance_0_u(_ = A._BroadcastSubscription.prototype, "get$_onPause", "_onPause$0", 0);
     _instance_0_u(_, "get$_onResume", "_onResume$0", 0);
-    _instance(A._Completer.prototype, "get$completeError", 0, 1, null, ["call$2", "call$1"], ["completeError$2", "completeError$1"], 27, 0, 0);
+    _instance(A._Completer.prototype, "get$completeError", 0, 1, null, ["call$2", "call$1"], ["completeError$2", "completeError$1"], 30, 0, 0);
     _instance_2_u(A._Future.prototype, "get$_completeError", "_completeError$2", 6);
     _instance_1_i(_ = A._StreamController.prototype, "get$add", "add$1", 7);
-    _instance(_, "get$addError", 0, 1, null, ["call$2", "call$1"], ["addError$2", "addError$1"], 27, 0, 0);
+    _instance(_, "get$addError", 0, 1, null, ["call$2", "call$1"], ["addError$2", "addError$1"], 30, 0, 0);
     _instance_0_u(_ = A._ControllerSubscription.prototype, "get$_onPause", "_onPause$0", 0);
     _instance_0_u(_, "get$_onResume", "_onResume$0", 0);
     _instance_0_u(_ = A._BufferingStreamSubscription.prototype, "get$_onPause", "_onPause$0", 0);
@@ -28108,7 +28579,7 @@
     _instance_0_u(_ = A._ForwardingStreamSubscription.prototype, "get$_onPause", "_onPause$0", 0);
     _instance_0_u(_, "get$_onResume", "_onResume$0", 0);
     _instance_1_u(_, "get$_handleData", "_handleData$1", 7);
-    _instance_2_u(_, "get$_handleError", "_handleError$2", 76);
+    _instance_2_u(_, "get$_handleError", "_handleError$2", 78);
     _instance_0_u(_, "get$_handleDone", "_handleDone$0", 0);
     _instance_0_u(_ = A._SinkTransformerStreamSubscription.prototype, "get$_onPause", "_onPause$0", 0);
     _instance_0_u(_, "get$_onResume", "_onResume$0", 0);
@@ -28119,79 +28590,76 @@
     _static_1(A, "core_Uri_decodeComponent$closure", "Uri_decodeComponent", 8);
     _static(A, "math__max$closure", 2, null, ["call$1$2", "call$2"], ["max", function(a, b) {
       return A.max(a, b, type$.num);
-    }], 112, 0);
-    _static_1(A, "math__sqrt$closure", "sqrt", 4);
-    _static_1(A, "math__sin$closure", "sin", 4);
-    _static_1(A, "math__cos$closure", "cos", 4);
-    _static_1(A, "math__tan$closure", "tan", 4);
-    _static_1(A, "math__acos$closure", "acos", 4);
-    _static_1(A, "math__asin$closure", "asin", 4);
-    _static_1(A, "math__atan$closure", "atan", 4);
+    }], 117, 0);
+    _static_1(A, "math__sqrt$closure", "sqrt", 5);
+    _static_1(A, "math__sin$closure", "sin", 5);
+    _static_1(A, "math__cos$closure", "cos", 5);
+    _static_1(A, "math__tan$closure", "tan", 5);
+    _static_1(A, "math__acos$closure", "acos", 5);
+    _static_1(A, "math__asin$closure", "asin", 5);
+    _static_1(A, "math__atan$closure", "atan", 5);
     _instance_1_u(A.DriftCommunication.prototype, "get$_handleMessage", "_handleMessage$1", 7);
-    _instance_1_u(A.DriftProtocol.prototype, "get$_decodeDbValue", "_decodeDbValue$1", 15);
-    _instance_1_u(A.WebProtocol.prototype, "get$_web_protocol$_decodeDbValue", "_web_protocol$_decodeDbValue$1", 15);
-    _static_1(A, "delegates___defaultSavepoint$closure", "_defaultSavepoint", 20);
-    _static_1(A, "delegates___defaultRelease$closure", "_defaultRelease", 20);
-    _static_1(A, "delegates___defaultRollbackToSavepoint$closure", "_defaultRollbackToSavepoint", 20);
-    _static_1(A, "native_functions___pow$closure", "_pow", 25);
-    _static_1(A, "native_functions___regexpImpl$closure", "_regexpImpl", 115);
-    _static_1(A, "native_functions___containsImpl$closure", "_containsImpl", 116);
-    _instance_1_u(_ = A.DartBridgeCallbacks.prototype, "get$logError", "logError$1", 10);
-    _instance_2_u(_, "get$localtime", "localtime$2", 63);
-    _instance(_, "get$xOpen", 0, 5, null, ["call$5"], ["xOpen$5"], 64, 0, 0);
-    _instance(_, "get$xDelete", 0, 3, null, ["call$3"], ["xDelete$3"], 65, 0, 0);
-    _instance(_, "get$xAccess", 0, 4, null, ["call$4"], ["xAccess$4"], 30, 0, 0);
-    _instance(_, "get$xFullPathname", 0, 4, null, ["call$4"], ["xFullPathname$4"], 30, 0, 0);
-    _instance(_, "get$xRandomness", 0, 3, null, ["call$3"], ["xRandomness$3"], 67, 0, 0);
-    _instance_2_u(_, "get$xSleep", "xSleep$2", 31);
-    _instance_2_u(_, "get$xCurrentTimeInt64", "xCurrentTimeInt64$2", 31);
-    _instance_1_u(_, "get$xClose", "xClose$1", 32);
-    _instance(_, "get$xRead", 0, 4, null, ["call$4"], ["xRead$4"], 33, 0, 0);
-    _instance(_, "get$xWrite", 0, 4, null, ["call$4"], ["xWrite$4"], 33, 0, 0);
-    _instance_2_u(_, "get$xTruncate", "xTruncate$2", 71);
-    _instance_2_u(_, "get$xSync", "xSync$2", 11);
-    _instance_2_u(_, "get$xFileSize", "xFileSize$2", 11);
-    _instance_2_u(_, "get$xLock", "xLock$2", 11);
-    _instance_2_u(_, "get$xUnlock", "xUnlock$2", 11);
-    _instance_2_u(_, "get$xCheckReservedLock", "xCheckReservedLock$2", 11);
-    _instance_1_u(_, "get$xDeviceCharacteristics", "xDeviceCharacteristics$1", 32);
-    _instance_1_u(_, "get$dispatchVoid", "dispatchVoid$1", 16);
-    _instance_1_u(_, "get$dispatchInt", "dispatchInt$1", 74);
-    _instance(_, "get$dispatchUpdateHook", 0, 5, null, ["call$5"], ["dispatchUpdateHook$5"], 75, 0, 0);
-    _instance(_, "get$dispatchXFunc", 0, 4, null, ["call$4"], ["dispatchXFunc$4"], 19, 0, 0);
-    _instance(_, "get$dispatchXStep", 0, 4, null, ["call$4"], ["dispatchXStep$4"], 19, 0, 0);
-    _instance(_, "get$dispatchXInverse", 0, 4, null, ["call$4"], ["dispatchXInverse$4"], 19, 0, 0);
-    _instance_2_u(_, "get$dispatchXValue", "dispatchXValue$2", 34);
-    _instance_2_u(_, "get$dispatchXFinal", "dispatchXFinal$2", 34);
-    _instance(_, "get$dispatchXCompare", 0, 5, null, ["call$5"], ["dispatchXCompare$5"], 78, 0, 0);
-    _instance_2_u(_, "get$dispatchBusyHandler", "dispatchBusyHandler$2", 79);
-    _instance_2_u(_, "get$dispatchApplyFilter", "dispatchApplyFilter$2", 121);
-    _instance(_, "get$dispatchApplyConflict", 0, 3, null, ["call$3"], ["dispatchApplyConflict$3"], 81, 0, 0);
+    _instance_1_u(A.DriftProtocol.prototype, "get$_decodeDbValue", "_decodeDbValue$1", 16);
+    _instance_1_u(A.WebProtocol.prototype, "get$_web_protocol$_decodeDbValue", "_web_protocol$_decodeDbValue$1", 16);
+    _static_1(A, "delegates___defaultSavepoint$closure", "_defaultSavepoint", 22);
+    _static_1(A, "delegates___defaultRelease$closure", "_defaultRelease", 22);
+    _static_1(A, "delegates___defaultRollbackToSavepoint$closure", "_defaultRollbackToSavepoint", 22);
+    _static_1(A, "native_functions___pow$closure", "_pow", 28);
+    _static_1(A, "native_functions___regexpImpl$closure", "_regexpImpl", 120);
+    _static_1(A, "native_functions___containsImpl$closure", "_containsImpl", 121);
+    _instance_1_u(_ = A.DartBridgeCallbacks.prototype, "get$logError", "logError$1", 4);
+    _instance_2_u(_, "get$localtime", "localtime$2", 65);
+    _instance(_, "get$xOpen", 0, 5, null, ["call$5"], ["xOpen$5"], 66, 0, 0);
+    _instance(_, "get$xDelete", 0, 3, null, ["call$3"], ["xDelete$3"], 67, 0, 0);
+    _instance(_, "get$xAccess", 0, 4, null, ["call$4"], ["xAccess$4"], 32, 0, 0);
+    _instance(_, "get$xFullPathname", 0, 4, null, ["call$4"], ["xFullPathname$4"], 32, 0, 0);
+    _instance(_, "get$xRandomness", 0, 3, null, ["call$3"], ["xRandomness$3"], 69, 0, 0);
+    _instance_2_u(_, "get$xSleep", "xSleep$2", 33);
+    _instance_2_u(_, "get$xCurrentTimeInt64", "xCurrentTimeInt64$2", 33);
+    _instance_1_u(_, "get$xClose", "xClose$1", 20);
+    _instance(_, "get$xRead", 0, 4, null, ["call$4"], ["xRead$4"], 34, 0, 0);
+    _instance(_, "get$xWrite", 0, 4, null, ["call$4"], ["xWrite$4"], 34, 0, 0);
+    _instance_2_u(_, "get$xTruncate", "xTruncate$2", 73);
+    _instance_2_u(_, "get$xSync", "xSync$2", 12);
+    _instance_2_u(_, "get$xFileSize", "xFileSize$2", 12);
+    _instance_2_u(_, "get$xLock", "xLock$2", 12);
+    _instance_2_u(_, "get$xUnlock", "xUnlock$2", 12);
+    _instance_2_u(_, "get$xCheckReservedLock", "xCheckReservedLock$2", 12);
+    _instance_1_u(_, "get$xDeviceCharacteristics", "xDeviceCharacteristics$1", 20);
+    _instance(_, "get$xFileControl", 0, 3, null, ["call$3"], ["xFileControl$3"], 75, 0, 0);
+    _instance_1_u(_, "get$xSectorSize", "xSectorSize$1", 20);
+    _instance_1_u(_, "get$dispatchVoid", "dispatchVoid$1", 9);
+    _instance_1_u(_, "get$dispatchInt", "dispatchInt$1", 76);
+    _instance(_, "get$dispatchUpdateHook", 0, 5, null, ["call$5"], ["dispatchUpdateHook$5"], 77, 0, 0);
+    _instance(_, "get$dispatchXFunc", 0, 4, null, ["call$4"], ["dispatchXFunc$4"], 21, 0, 0);
+    _instance(_, "get$dispatchXStep", 0, 4, null, ["call$4"], ["dispatchXStep$4"], 21, 0, 0);
+    _instance(_, "get$dispatchXInverse", 0, 4, null, ["call$4"], ["dispatchXInverse$4"], 21, 0, 0);
+    _instance_2_u(_, "get$dispatchXValue", "dispatchXValue$2", 35);
+    _instance_2_u(_, "get$dispatchXFinal", "dispatchXFinal$2", 35);
+    _instance(_, "get$dispatchXCompare", 0, 5, null, ["call$5"], ["dispatchXCompare$5"], 80, 0, 0);
+    _instance_2_u(_, "get$dispatchBusyHandler", "dispatchBusyHandler$2", 81);
+    _instance_2_u(_, "get$dispatchApplyFilter", "dispatchApplyFilter$2", 82);
+    _instance(_, "get$dispatchApplyConflict", 0, 3, null, ["call$3"], ["dispatchApplyConflict$3"], 83, 0, 0);
     _instance_0_u(A.WasmVfs.prototype, "get$close", "close$0", 0);
-    _static_1(A, "sync_channel_MessageSerializer_readEmpty$closure", "MessageSerializer_readEmpty", 117);
-    _static_1(A, "sync_channel_MessageSerializer_readFlags$closure", "MessageSerializer_readFlags", 118);
-    _static_1(A, "sync_channel_MessageSerializer_readNameAndFlags$closure", "MessageSerializer_readNameAndFlags", 119);
-    _instance_1_u(A.VfsWorker.prototype, "get$_releaseImplicitLock", "_releaseImplicitLock$1", 83);
-    _instance_0_u(A.AsynchronousIndexedDbFileSystem.prototype, "get$close", "close$0", 0);
-    _instance_0_u(A.IndexedDbFileSystem.prototype, "get$close", "close$0", 2);
-    _instance_0_u(A._FunctionWorkItem.prototype, "get$run", "run$0", 0);
-    _instance_0_u(A._DeleteFileWorkItem.prototype, "get$run", "run$0", 2);
-    _instance_0_u(A._CreateFileWorkItem.prototype, "get$run", "run$0", 2);
-    _instance_0_u(A._WriteFileWorkItem.prototype, "get$run", "run$0", 2);
+    _static_1(A, "sync_channel_MessageSerializer_readEmpty$closure", "MessageSerializer_readEmpty", 122);
+    _static_1(A, "sync_channel_MessageSerializer_readFlags$closure", "MessageSerializer_readFlags", 123);
+    _static_1(A, "sync_channel_MessageSerializer_readNameAndFlags$closure", "MessageSerializer_readNameAndFlags", 124);
+    _instance_1_u(A.VfsWorker.prototype, "get$_releaseImplicitLock", "_releaseImplicitLock$1", 85);
+    _instance_0_u(A.IndexedDbFileSystem.prototype, "get$close", "close$0", 10);
     _instance_0_u(A.SimpleOpfsFileSystem.prototype, "get$close", "close$0", 0);
-    _static_1(A, "frame_Frame___parseVM_tearOff$closure", "Frame___parseVM_tearOff", 13);
-    _static_1(A, "frame_Frame___parseV8_tearOff$closure", "Frame___parseV8_tearOff", 13);
-    _static_1(A, "frame_Frame___parseFirefox_tearOff$closure", "Frame___parseFirefox_tearOff", 13);
-    _static_1(A, "frame_Frame___parseFriendly_tearOff$closure", "Frame___parseFriendly_tearOff", 13);
-    _static_1(A, "trace_Trace___parseVM_tearOff$closure", "Trace___parseVM_tearOff", 35);
-    _static_1(A, "trace_Trace___parseFriendly_tearOff$closure", "Trace___parseFriendly_tearOff", 35);
+    _static_1(A, "frame_Frame___parseVM_tearOff$closure", "Frame___parseVM_tearOff", 14);
+    _static_1(A, "frame_Frame___parseV8_tearOff$closure", "Frame___parseV8_tearOff", 14);
+    _static_1(A, "frame_Frame___parseFirefox_tearOff$closure", "Frame___parseFirefox_tearOff", 14);
+    _static_1(A, "frame_Frame___parseFriendly_tearOff$closure", "Frame___parseFriendly_tearOff", 14);
+    _static_1(A, "trace_Trace___parseVM_tearOff$closure", "Trace___parseVM_tearOff", 36);
+    _static_1(A, "trace_Trace___parseFriendly_tearOff$closure", "Trace___parseFriendly_tearOff", 36);
   })();
   (function inheritance() {
     var _mixin = hunkHelpers.mixin,
       _inherit = hunkHelpers.inherit,
       _inheritMany = hunkHelpers.inheritMany;
     _inherit(A.Object, null);
-    _inheritMany(A.Object, [A.JS_CONST, J.Interceptor, A.SafeToStringHook, J.ArrayIterator, A.Iterable, A.CastIterator, A.Error, A.ListBase, A.Closure, A.SentinelValue, A.ListIterator, A.MappedIterator, A.WhereIterator, A.ExpandIterator, A.TakeIterator, A.SkipIterator, A.SkipWhileIterator, A.EmptyIterator, A.WhereTypeIterator, A.IndexedIterator, A.FixedLengthListMixin, A.UnmodifiableListMixin, A.Symbol, A._Record, A.ConstantMap, A._KeysOrValuesOrElementsIterator, A.TypeErrorDecoder, A.NullThrownFromJavaScriptException, A.ExceptionAndStackTrace, A._StackTrace, A.MapBase, A.LinkedHashMapCell, A.LinkedHashMapKeyIterator, A.LinkedHashMapValueIterator, A.LinkedHashMapEntryIterator, A.JSSyntaxRegExp, A._MatchImplementation, A._AllMatchesIterator, A.StringMatch, A._StringAllMatchesIterator, A._Cell, A._UnmodifiableNativeByteBufferView, A.Rti, A._FunctionParameters, A._Type, A._TimerImpl, A._AsyncAwaitCompleter, A._SyncStarIterator, A.AsyncError, A.Stream, A._BufferingStreamSubscription, A._BroadcastStreamController, A._Completer, A._FutureListener, A._Future, A._AsyncCallbackEntry, A.StreamTransformerBase, A._StreamController, A._SyncStreamControllerDispatch, A._AsyncStreamControllerDispatch, A._StreamSinkWrapper, A._DelayedEvent, A._DelayedDone, A._PendingEvents, A._DoneStreamSubscription, A._StreamIterator, A._EventSinkWrapper, A._HandlerEventSink, A._ZoneFunction, A._ZoneSpecification, A._ZoneDelegate, A._Zone, A._HashMapKeyIterator, A.SetBase, A._LinkedHashSetCell, A._LinkedHashSetIterator, A._LinkedListIterator, A.LinkedListEntry, A._MapBaseValueIterator, A.Codec, A.Converter, A._Utf8Encoder, A._Utf8Decoder, A._BigIntImpl, A._FinalizationRegistryWrapper, A.DateTime, A.Duration, A._Enum, A.OutOfMemoryError, A.StackOverflowError, A._Exception, A.FormatException, A.IntegerDivisionByZeroException, A.MapEntry, A.Null, A._StringStackTrace, A.StringBuffer, A._Uri, A.UriData, A._SimpleUri, A.Expando, A.NullRejectionException, A._JSSecureRandom, A.DelegatingStreamSink, A.DefaultEquality, A.ListEquality, A.NonGrowableListMixin, A.UnmodifiableMapMixin, A.DriftCommunication, A._PendingRequest, A.ConnectionClosedException, A.DriftRemoteException, A.DriftProtocol, A.Message, A.PrimitiveResponsePayload, A.ExecuteQuery, A.RequestCancellation, A.ExecuteBatchedStatement, A.RunNestedExecutorControl, A.EnsureOpen, A.ServerInfo, A.RunBeforeOpen, A.NotifyTablesUpdated, A.SelectResult, A.ServerImplementation, A._ServerDbUser, A.WebProtocol, A.TableUpdate, A.CancellationToken, A.CancellationException, A.QueryExecutor, A.BatchedStatements, A.ArgumentsForBatchedStatement, A.QueryDelegate, A.TransactionDelegate, A.DbVersionDelegate, A.QueryResult, A.QueryInterceptor, A.OpeningDetails, A.PreparedStatementsCache, A.Lock, A.DedicatedDriftWorker, A.WasmInitializationMessage, A.DriftServerController, A.RunningWasmServer, A.WasmCompatibility, A.SharedDriftWorker, A.Context, A.Style, A.ParsedPath, A.PathException, A.SqliteException, A.AllowedArgumentCount, A.DatabaseImplementation, A.Sqlite3Implementation, A.CommonPreparedStatement, A.VirtualFileSystem, A.BaseVfsFile, A.Cursor, A._Row_Object_UnmodifiableMapMixin, A._ResultIterator, A.IndexedParameters, A.VfsException, A.Sqlite3Filename, A.WasmSqliteBindings, A.WasmDatabase0, A.WasmStatementCompiler, A.WasmStatement, A.WasmContext, A.WasmValue, A.DartBridgeCallbacks, A.RegisteredFunctionSet, A._CursorReader, A.WasmModuleLoader, A.RequestResponseSynchronizer, A.MessageSerializer, A.Message0, A._ResolvedPath, A.VfsWorker, A._OpenedFileHandle, A.AsynchronousIndexedDbFileSystem, A._FileWriteRequest, A._OffsetAndBuffer, A._IndexedDbFile, A._OpfsFiles, A.WasmBindings, A.Chain, A.Frame, A.LazyTrace, A.Trace, A.UnparsedFrame, A.StreamChannelMixin, A._GuaranteeSink, A.StreamChannelController, A.EventStreamProvider, A._EventStreamSubscription]);
+    _inheritMany(A.Object, [A.JS_CONST, J.Interceptor, A.SafeToStringHook, J.ArrayIterator, A.Iterable, A.CastIterator, A.Error, A.ListBase, A.Closure, A.SentinelValue, A.ListIterator, A.MappedIterator, A.WhereIterator, A.ExpandIterator, A.TakeIterator, A.SkipIterator, A.SkipWhileIterator, A.EmptyIterator, A.WhereTypeIterator, A.IndexedIterator, A.FixedLengthListMixin, A.UnmodifiableListMixin, A.Symbol, A._Record, A.ConstantMap, A._KeysOrValuesOrElementsIterator, A.TypeErrorDecoder, A.NullThrownFromJavaScriptException, A.ExceptionAndStackTrace, A._StackTrace, A.MapBase, A.LinkedHashMapCell, A.LinkedHashMapKeyIterator, A.LinkedHashMapValueIterator, A.LinkedHashMapEntryIterator, A.JSSyntaxRegExp, A._MatchImplementation, A._AllMatchesIterator, A.StringMatch, A._StringAllMatchesIterator, A._Cell, A._UnmodifiableNativeByteBufferView, A.Rti, A._FunctionParameters, A._Type, A._TimerImpl, A._AsyncAwaitCompleter, A._SyncStarIterator, A.AsyncError, A.Stream, A._BufferingStreamSubscription, A._BroadcastStreamController, A._FutureResult, A._Completer, A._FutureListener, A._Future, A._AsyncCallbackEntry, A.StreamTransformerBase, A._StreamController, A._SyncStreamControllerDispatch, A._AsyncStreamControllerDispatch, A._StreamSinkWrapper, A._DelayedEvent, A._DelayedDone, A._PendingEvents, A._DoneStreamSubscription, A._StreamIterator, A._EventSinkWrapper, A._HandlerEventSink, A._ZoneFunction, A._ZoneSpecification, A._ZoneDelegate, A._Zone, A._HashMapKeyIterator, A.SetBase, A._LinkedHashSetCell, A._LinkedHashSetIterator, A._LinkedListIterator, A.LinkedListEntry, A._MapBaseValueIterator, A.Codec, A.Converter, A._Utf8Encoder, A._Utf8Decoder, A._BigIntImpl, A._FinalizationRegistryWrapper, A.DateTime, A.Duration, A._Enum, A.OutOfMemoryError, A.StackOverflowError, A._Exception, A.FormatException, A.IntegerDivisionByZeroException, A.MapEntry, A.Null, A._StringStackTrace, A.StringBuffer, A._Uri, A.UriData, A._SimpleUri, A.Expando, A.NullRejectionException, A._JSSecureRandom, A.DelegatingStreamSink, A.DefaultEquality, A.ListEquality, A.NonGrowableListMixin, A.UnmodifiableMapMixin, A.DriftCommunication, A._PendingRequest, A.ConnectionClosedException, A.DriftRemoteException, A.DriftProtocol, A.Message, A.PrimitiveResponsePayload, A.ExecuteQuery, A.RequestCancellation, A.ExecuteBatchedStatement, A.RunNestedExecutorControl, A.EnsureOpen, A.ServerInfo, A.RunBeforeOpen, A.NotifyTablesUpdated, A.SelectResult, A.ServerImplementation, A._ServerDbUser, A.WebProtocol, A.TableUpdate, A.CancellationToken, A.CancellationException, A.QueryExecutor, A.BatchedStatements, A.ArgumentsForBatchedStatement, A.QueryDelegate, A.TransactionDelegate, A.DbVersionDelegate, A.QueryResult, A.QueryInterceptor, A.OpeningDetails, A.PreparedStatementsCache, A.Lock, A.DedicatedDriftWorker, A.WasmInitializationMessage, A.DriftServerController, A.RunningWasmServer, A.WasmCompatibility, A.SharedDriftWorker, A.Context, A.Style, A.ParsedPath, A.PathException, A.SqliteException, A.AllowedArgumentCount, A.DatabaseImplementation, A.Sqlite3Implementation, A.CommonPreparedStatement, A.VirtualFileSystem, A.BaseVfsFile, A.Cursor, A._Row_Object_UnmodifiableMapMixin, A._ResultIterator, A.IndexedParameters, A.VfsException, A.Sqlite3Filename, A.WasmSqliteBindings, A.WasmDatabase0, A.WasmStatementCompiler, A.WasmStatement, A.WasmContext, A.WasmValue, A.DartBridgeCallbacks, A.RegisteredFunctionSet, A._CursorReader, A.WasmModuleLoader, A.RequestResponseSynchronizer, A.MessageSerializer, A.Message0, A._ResolvedPath, A.VfsWorker, A._OpenedFileHandle, A.AsynchronousIndexedDbFileSystem, A._IndexedDbTransaction, A._FileWriteRequest, A._OffsetAndBuffer, A._IndexedDbFile, A._OpfsFiles, A.WasmBindings, A.Chain, A.Frame, A.LazyTrace, A.Trace, A.UnparsedFrame, A.StreamChannelMixin, A._GuaranteeSink, A.StreamChannelController, A.EventStreamProvider, A._EventStreamSubscription]);
     _inheritMany(J.Interceptor, [J.JSBool, J.JSNull, J.JavaScriptObject, J.JavaScriptBigInt, J.JavaScriptSymbol, J.JSNumber, J.JSString]);
     _inheritMany(J.JavaScriptObject, [J.LegacyJavaScriptObject, J.JSArray, A.NativeByteBuffer, A.NativeTypedData]);
     _inheritMany(J.LegacyJavaScriptObject, [J.PlainJavaScriptObject, J.UnknownJavaScriptObject, J.JavaScriptFunction]);
@@ -28203,11 +28671,11 @@
     _inherit(A._EfficientLengthCastIterable, A.CastIterable);
     _inherit(A._CastListBase, A.__CastListBase__CastIterableBase_ListMixin);
     _inherit(A.CastList, A._CastListBase);
-    _inheritMany(A.Error, [A.LateError, A.TypeError, A.JsNoSuchMethodError, A.UnknownJsTypeError, A.RuntimeError, A._Error, A.AssertionError, A.ArgumentError, A.UnsupportedError, A.UnimplementedError, A.StateError, A.ConcurrentModificationError]);
+    _inheritMany(A.Error, [A.LateError, A.TypeError, A.JsNoSuchMethodError, A.UnknownJsTypeError, A.RuntimeError, A._Error, A.ParallelWaitError, A.AssertionError, A.ArgumentError, A.UnsupportedError, A.UnimplementedError, A.StateError, A.ConcurrentModificationError]);
     _inheritMany(A.ListBase, [A.UnmodifiableListBase, A.ValueList, A.WasmValueList, A.TypedDataBuffer]);
     _inherit(A.CodeUnits, A.UnmodifiableListBase);
-    _inheritMany(A.Closure, [A.Closure0Args, A.Instantiation, A.Closure2Args, A.TearOffClosure, A.initHooks_closure, A.initHooks_closure1, A._AsyncRun__initializeScheduleImmediate_internalCallback, A._AsyncRun__initializeScheduleImmediate_closure, A._awaitOnObject_closure, A._SyncBroadcastStreamController__sendData_closure, A._SyncBroadcastStreamController__sendError_closure, A._SyncBroadcastStreamController__sendDone_closure, A.Future_wait_closure, A._Future__propagateToListeners_handleWhenCompleteCallback_closure, A.Stream_length_closure, A.Stream_first_closure0, A.Stream_firstWhere_closure0, A.Stream_firstWhere__closure0, A._StreamHandlerTransformer_closure, A._CustomZone_bindUnaryCallback_closure, A._CustomZone_bindUnaryCallbackGuarded_closure, A._RootZone_bindUnaryCallback_closure, A._RootZone_bindUnaryCallbackGuarded_closure, A._HashMap_values_closure, A.MapBase_entries_closure, A._BigIntImpl_hashCode_finish, A._Uri__makePath_closure, A.jsify__convert, A.promiseToFuture_closure, A.promiseToFuture_closure0, A.dartify_convert, A.DriftCommunication_setRequestHandler_closure, A.DriftProtocol_decodePayload_readInt, A.DriftProtocol_decodePayload_readNullableInt, A.ServerImplementation_closure, A.ServerImplementation_serve_closure, A.ServerImplementation_serve_closure0, A.ServerImplementation__waitForTurn_closure, A.WebProtocol__serializeRequest_closure, A.WebProtocol__deserializeRequest_readBatched_closure, A.WebProtocol__deserializeRequest_readBatched_closure0, A.WebProtocol__deserializeRequest_closure, A.WebProtocol__serializeSelectResult_closure, A.WebProtocol__deserializeResponse_closure, A.QueryResult_asMap_closure, A.EnableNativeFunctions_useNativeFunctions_closure, A._unaryNumFunction_closure, A.LazyDatabase__awaitOpened_closure, A.LazyDatabase_ensureOpen_closure, A.Lock_synchronized_closure, A.WebPortToChannel_channel_closure, A.WebPortToChannel_channel_closure0, A.DedicatedDriftWorker_start_closure, A.SharedWorkerCompatibilityResult_SharedWorkerCompatibilityResult$fromJsPayload_asBoolean, A.checkIndexedDbExists_closure, A.opfsDatabases_closure, A.DriftServerController_serve___closure, A.RunningWasmServer_serve_closure, A.CompleteIdbRequest_complete_closure1, A.CompleteIdbRequest_complete_closure2, A.CompleteIdbRequest_complete_closure3, A.SharedDriftWorker_start_closure, A.SharedDriftWorker__newConnection_closure, A.SharedDriftWorker__startFeatureDetection_result, A.SharedDriftWorker__startFeatureDetection_closure, A.SharedDriftWorker__startFeatureDetection_closure0, A.Context_joinAll_closure, A.Context_split_closure, A._validateArgList_closure, A.WindowsStyle_absolutePathToUri_closure, A.SqliteException_toString_closure, A.pathComponents_closure, A.AsyncJavaScriptIteratable_listen_fetchNext_closure, A._CursorReader_moveNext_closure, A._CursorReader_moveNext_closure0, A.CompleteIdbRequest_complete_closure, A.CompleteIdbRequest_complete_closure0, A.CompleteOpenIdbRequest_completeOrBlocked_closure, A.CompleteOpenIdbRequest_completeOrBlocked_closure0, A.CompleteOpenIdbRequest_completeOrBlocked_closure1, A.AsynchronousIndexedDbFileSystem_open_closure, A.AsynchronousIndexedDbFileSystem__readFile_closure, A.AsynchronousIndexedDbFileSystem__write_closure, A.SimpleOpfsFileSystem_open_open, A.WasmBindings_closure, A.WasmBindings_closure0, A.WasmBindings_closure1, A.WasmBindings_closure2, A.Chain_Chain$parse_closure, A.Chain_toTrace_closure, A.Chain_toString_closure0, A.Chain_toString__closure0, A.Chain_toString_closure, A.Chain_toString__closure, A.Trace__parseVM_closure, A.Trace$parseV8_closure, A.Trace$parseJSCore_closure, A.Trace$parseFirefox_closure, A.Trace$parseFriendly_closure, A.Trace_toString_closure0, A.Trace_toString_closure, A._EventStreamSubscription_closure, A._EventStreamSubscription_onData_closure]);
-    _inheritMany(A.Closure0Args, [A.nullFuture_closure, A._AsyncRun__scheduleImmediateJsOverride_internalCallback, A._AsyncRun__scheduleImmediateWithSetImmediate_internalCallback, A._TimerImpl_internalCallback, A._TimerImpl$periodic_closure, A.Future_Future_closure, A.Future_Future$delayed_closure, A._Future__addListener_closure, A._Future__prependListeners_closure, A._Future__chainCoreFuture_closure, A._Future__asyncCompleteWithValue_closure, A._Future__asyncCompleteErrorObject_closure, A._Future__propagateToListeners_handleWhenCompleteCallback, A._Future__propagateToListeners_handleValueCallback, A._Future__propagateToListeners_handleError, A.Stream_length_closure0, A.Stream_first_closure, A.Stream_firstWhere_closure, A.Stream_firstWhere__closure, A._StreamController__subscribe_closure, A._StreamController__recordCancel_complete, A._BufferingStreamSubscription__sendError_sendError, A._BufferingStreamSubscription__sendDone_sendDone, A._PendingEvents_schedule_closure, A._cancelAndError_closure, A._cancelAndValue_closure, A._CustomZone_bindCallback_closure, A._CustomZone_bindCallbackGuarded_closure, A._rootHandleError_closure, A._RootZone_bindCallback_closure, A._RootZone_bindCallbackGuarded_closure, A._Utf8Decoder__decoder_closure, A._Utf8Decoder__decoderNonfatal_closure, A.DriftCommunication_closure, A.ServerImplementation__handleRequest_closure, A.ServerImplementation__handleRequest_closure0, A.ServerImplementation__waitForTurn_idIsActive, A.WebProtocol_deserialize_decodeRequest, A.WebProtocol_deserialize_decodeSuccess, A.WebProtocol__deserializeRequest_readBatched, A.runCancellable_closure, A._BaseExecutor__synchronized_closure, A._BaseExecutor_runSelect_closure, A._BaseExecutor_runDelete_closure, A._BaseExecutor_runInsert_closure, A._BaseExecutor_runCustom_closure, A._BaseExecutor_runBatched_closure, A._StatementBasedTransactionExecutor_ensureOpen_closure, A._StatementBasedTransactionExecutor_ensureOpen_closure0, A.DelegatedDatabase_ensureOpen_closure, A.DelegatedDatabase_close_closure, A._ExclusiveExecutor_ensureOpen_closure, A.Lock_synchronized_callBlockAndComplete, A.Lock_synchronized_callBlockAndComplete_closure, A.WebPortToChannel_channel_closure1, A.DedicatedDriftWorker__handleMessage_closure, A.DriftServerController_serve_closure, A.DriftServerController_serve__closure, A.DriftServerController_serve__closure0, A.DriftServerController_serve__closure1, A.DatabaseImplementation__prepareInternal_freeIntermediateResults, A.DartBridgeCallbacks_xDelete_closure, A.DartBridgeCallbacks_xAccess_closure, A.DartBridgeCallbacks_xFullPathname_closure, A.DartBridgeCallbacks_xRandomness_closure, A.DartBridgeCallbacks_xSleep_closure, A.DartBridgeCallbacks_xClose_closure, A.DartBridgeCallbacks_xRead_closure, A.DartBridgeCallbacks_xWrite_closure, A.DartBridgeCallbacks_xTruncate_closure, A.DartBridgeCallbacks_xSync_closure, A.DartBridgeCallbacks_xFileSize_closure, A.DartBridgeCallbacks_xLock_closure, A.DartBridgeCallbacks_xUnlock_closure, A.DartBridgeCallbacks_xCheckReservedLock_closure, A.AsyncJavaScriptIteratable_listen_fetchNext, A.AsyncJavaScriptIteratable_listen_fetchNextIfNecessary, A.WasmModuleLoader_createImportObject_closure, A.AsynchronousIndexedDbFileSystem_readFully_closure, A._FileWriteRequest__updateBlock_closure, A.IndexedDbFileSystem__startWorkingIfNeeded_closure, A._IndexedDbFile_xTruncate_closure, A.Frame_Frame$parseVM_closure, A.Frame_Frame$parseV8_closure, A.Frame_Frame$_parseFirefoxEval_closure, A.Frame_Frame$parseFirefox_closure, A.Frame_Frame$parseFriendly_closure, A.Trace_Trace$from_closure, A.GuaranteeChannel_closure, A.GuaranteeChannel__closure]);
+    _inheritMany(A.Closure, [A.Closure0Args, A.Instantiation, A.Closure2Args, A.TearOffClosure, A.initHooks_closure, A.initHooks_closure1, A._AsyncRun__initializeScheduleImmediate_internalCallback, A._AsyncRun__initializeScheduleImmediate_closure, A._awaitOnObject_closure, A._SyncBroadcastStreamController__sendData_closure, A._SyncBroadcastStreamController__sendError_closure, A._SyncBroadcastStreamController__sendDone_closure, A.Future_wait_closure, A.FutureIterable_get_wait_closure, A._FutureResult__wait_closure, A._FutureResult__waitAll_onReady, A._Future__propagateToListeners_handleWhenCompleteCallback_closure, A.Stream_length_closure, A.Stream_first_closure0, A.Stream_firstWhere_closure0, A.Stream_firstWhere__closure0, A._StreamHandlerTransformer_closure, A._CustomZone_bindUnaryCallback_closure, A._CustomZone_bindUnaryCallbackGuarded_closure, A._RootZone_bindUnaryCallback_closure, A._RootZone_bindUnaryCallbackGuarded_closure, A._HashMap_values_closure, A.MapBase_entries_closure, A._BigIntImpl_hashCode_finish, A._Uri__makePath_closure, A.jsify__convert, A.promiseToFuture_closure, A.promiseToFuture_closure0, A.dartify_convert, A.DriftCommunication_setRequestHandler_closure, A.DriftProtocol_decodePayload_readInt, A.DriftProtocol_decodePayload_readNullableInt, A.ServerImplementation_closure, A.ServerImplementation_serve_closure, A.ServerImplementation_serve_closure0, A.ServerImplementation__waitForTurn_closure, A.WebProtocol__serializeRequest_closure, A.WebProtocol__deserializeRequest_readBatched_closure, A.WebProtocol__deserializeRequest_readBatched_closure0, A.WebProtocol__deserializeRequest_closure, A.WebProtocol__serializeSelectResult_closure, A.WebProtocol__deserializeResponse_closure, A.QueryResult_asMap_closure, A.EnableNativeFunctions_useNativeFunctions_closure, A._unaryNumFunction_closure, A.LazyDatabase__awaitOpened_closure, A.LazyDatabase_ensureOpen_closure, A.Lock_synchronized_closure, A.WebPortToChannel_channel_closure, A.WebPortToChannel_channel_closure0, A.DedicatedDriftWorker_start_closure, A.SharedWorkerCompatibilityResult_SharedWorkerCompatibilityResult$fromJsPayload_asBoolean, A.checkIndexedDbExists_closure, A.opfsDatabases_closure, A.DriftServerController_serve___closure, A.RunningWasmServer_serve_closure, A.CompleteIdbRequest_complete_closure1, A.CompleteIdbRequest_complete_closure2, A.CompleteIdbRequest_complete_closure3, A.SharedDriftWorker_start_closure, A.SharedDriftWorker__newConnection_closure, A.SharedDriftWorker__startFeatureDetection_result, A.SharedDriftWorker__startFeatureDetection_closure, A.SharedDriftWorker__startFeatureDetection_closure0, A.Context_joinAll_closure, A.Context_split_closure, A._validateArgList_closure, A.WindowsStyle_absolutePathToUri_closure, A.SqliteException_toString_closure, A.pathComponents_closure, A.runWithNativeMicrotasks_addTask, A.runWithNativeMicrotasks_closure, A.AsyncJavaScriptIteratable_listen_fetchNext_closure, A._CursorReader_moveNext_closure, A._CursorReader_moveNext_closure0, A.CompleteIdbRequest_complete_closure, A.CompleteIdbRequest_complete_closure0, A.CompleteOpenIdbRequest_completeOrBlocked_closure, A.CompleteOpenIdbRequest_completeOrBlocked_closure0, A.CompleteOpenIdbRequest_completeOrBlocked_closure1, A.AsynchronousIndexedDbFileSystem_open_closure, A.AsynchronousIndexedDbFileSystem__performWrites_closure, A._IndexedDbTransaction__readFile_closure, A._IndexedDbTransaction_startRead_completeRead, A._IndexedDbTransaction_write_closure, A.IndexedDbFileSystem_close_closure, A.IndexedDbFileSystem__readFiles_closure, A._IndexedDbFile_xTruncate_closure, A.SimpleOpfsFileSystem_open_open, A.WasmBindings_closure, A.WasmBindings_closure0, A.WasmBindings_closure1, A.WasmBindings_closure2, A.Chain_Chain$parse_closure, A.Chain_toTrace_closure, A.Chain_toString_closure0, A.Chain_toString__closure0, A.Chain_toString_closure, A.Chain_toString__closure, A.Trace__parseVM_closure, A.Trace$parseV8_closure, A.Trace$parseJSCore_closure, A.Trace$parseFirefox_closure, A.Trace$parseFriendly_closure, A.Trace_toString_closure0, A.Trace_toString_closure, A._EventStreamSubscription_closure, A._EventStreamSubscription_onData_closure]);
+    _inheritMany(A.Closure0Args, [A.nullFuture_closure, A._AsyncRun__scheduleImmediateJsOverride_internalCallback, A._AsyncRun__scheduleImmediateWithSetImmediate_internalCallback, A._TimerImpl_internalCallback, A._TimerImpl$periodic_closure, A.Future_Future$delayed_closure, A._Future__addListener_closure, A._Future__prependListeners_closure, A._Future__chainCoreFuture_closure, A._Future__asyncCompleteWithValue_closure, A._Future__asyncCompleteErrorObject_closure, A._Future__propagateToListeners_handleWhenCompleteCallback, A._Future__propagateToListeners_handleValueCallback, A._Future__propagateToListeners_handleError, A.Stream_length_closure0, A.Stream_first_closure, A.Stream_firstWhere_closure, A.Stream_firstWhere__closure, A._StreamController__subscribe_closure, A._StreamController__recordCancel_complete, A._BufferingStreamSubscription__sendError_sendError, A._BufferingStreamSubscription__sendDone_sendDone, A._PendingEvents_schedule_closure, A._cancelAndError_closure, A._cancelAndValue_closure, A._CustomZone_bindCallback_closure, A._CustomZone_bindCallbackGuarded_closure, A._rootHandleError_closure, A._RootZone_bindCallback_closure, A._RootZone_bindCallbackGuarded_closure, A._Utf8Decoder__decoder_closure, A._Utf8Decoder__decoderNonfatal_closure, A.DriftCommunication_closure, A.ServerImplementation__handleRequest_closure, A.ServerImplementation__handleRequest_closure0, A.ServerImplementation__waitForTurn_idIsActive, A.WebProtocol_deserialize_decodeRequest, A.WebProtocol_deserialize_decodeSuccess, A.WebProtocol__deserializeRequest_readBatched, A.runCancellable_closure, A._BaseExecutor__synchronized_closure, A._BaseExecutor_runSelect_closure, A._BaseExecutor_runDelete_closure, A._BaseExecutor_runInsert_closure, A._BaseExecutor_runCustom_closure, A._BaseExecutor_runBatched_closure, A._StatementBasedTransactionExecutor_ensureOpen_closure, A._StatementBasedTransactionExecutor_ensureOpen_closure0, A.DelegatedDatabase_ensureOpen_closure, A.DelegatedDatabase_close_closure, A._ExclusiveExecutor_ensureOpen_closure, A.Lock_synchronized_callBlockAndComplete, A.Lock_synchronized_callBlockAndComplete_closure, A.WebPortToChannel_channel_closure1, A.DedicatedDriftWorker__handleMessage_closure, A.DriftServerController_serve_closure, A.DriftServerController_serve__closure, A.DriftServerController_serve__closure0, A.DriftServerController_serve__closure1, A.DatabaseImplementation__prepareInternal_freeIntermediateResults, A.runWithNativeMicrotasks_runTasks, A.DartBridgeCallbacks_xDelete_closure, A.DartBridgeCallbacks_xAccess_closure, A.DartBridgeCallbacks_xFullPathname_closure, A.DartBridgeCallbacks_xRandomness_closure, A.DartBridgeCallbacks_xSleep_closure, A.DartBridgeCallbacks_xClose_closure, A.DartBridgeCallbacks_xRead_closure, A.DartBridgeCallbacks_xWrite_closure, A.DartBridgeCallbacks_xTruncate_closure, A.DartBridgeCallbacks_xSync_closure, A.DartBridgeCallbacks_xFileSize_closure, A.DartBridgeCallbacks_xLock_closure, A.DartBridgeCallbacks_xUnlock_closure, A.DartBridgeCallbacks_xCheckReservedLock_closure, A.AsyncJavaScriptIteratable_listen_fetchNext, A.AsyncJavaScriptIteratable_listen_fetchNextIfNecessary, A.WasmModuleLoader_createImportObject_closure, A.AsynchronousIndexedDbFileSystem__runTransaction_closure, A._IndexedDbTransaction_closure, A._IndexedDbTransaction_closure0, A._FileWriteRequest__updateBlock_closure, A.IndexedDbFileSystem__startWorkingIfNeeded_closure, A.Frame_Frame$parseVM_closure, A.Frame_Frame$parseV8_closure, A.Frame_Frame$_parseFirefoxEval_closure, A.Frame_Frame$parseFirefox_closure, A.Frame_Frame$parseFriendly_closure, A.Trace_Trace$from_closure, A.GuaranteeChannel_closure, A.GuaranteeChannel__closure]);
     _inheritMany(A.EfficientLengthIterable, [A.ListIterable, A.EmptyIterable, A.LinkedHashMapKeysIterable, A.LinkedHashMapValuesIterable, A.LinkedHashMapEntriesIterable, A._HashMapKeyIterable, A._MapBaseValueIterable]);
     _inheritMany(A.ListIterable, [A.SubListIterable, A.MappedListIterable, A.ReversedListIterable]);
     _inherit(A.EfficientLengthMappedIterable, A.MappedIterable);
@@ -28221,7 +28689,7 @@
     _inherit(A.NullError, A.TypeError);
     _inheritMany(A.TearOffClosure, [A.StaticClosure, A.BoundClosure]);
     _inheritMany(A.MapBase, [A.JsLinkedHashMap, A._HashMap]);
-    _inheritMany(A.Closure2Args, [A.JsLinkedHashMap_addAll_closure, A.initHooks_closure0, A._awaitOnObject_closure0, A._wrapJsFunctionForAsync_closure, A.Future_wait_handleError, A._Future__propagateToListeners_handleWhenCompleteCallback_closure0, A._cancelAndErrorClosure_closure, A.HashMap_HashMap$from_closure, A.MapBase_mapToString_closure, A._BigIntImpl_hashCode_combine, A.Uri_parseIPv6Address_error, A.WasmInitializationMessage_sendToWorker_closure, A.WasmInitializationMessage_sendToPort_closure, A.WasmInitializationMessage_sendToClient_closure, A.DatabaseImplementation_createFunction_closure, A.AsynchronousIndexedDbFileSystem__write_writeBlock, A.Frame_Frame$parseV8_closure_parseJsLocation]);
+    _inheritMany(A.Closure2Args, [A.JsLinkedHashMap_addAll_closure, A.initHooks_closure0, A._awaitOnObject_closure0, A._wrapJsFunctionForAsync_closure, A.Future_wait_handleError, A._FutureResult__wait_closure0, A._Future__propagateToListeners_handleWhenCompleteCallback_closure0, A._cancelAndErrorClosure_closure, A.HashMap_HashMap$from_closure, A.MapBase_mapToString_closure, A._BigIntImpl_hashCode_combine, A.Uri_parseIPv6Address_error, A.WasmInitializationMessage_sendToWorker_closure, A.WasmInitializationMessage_sendToPort_closure, A.WasmInitializationMessage_sendToClient_closure, A.DatabaseImplementation_createFunction_closure, A._IndexedDbTransaction_write_writeBlock, A.Frame_Frame$parseV8_closure_parseJsLocation]);
     _inherit(A.NativeArrayBuffer, A.NativeByteBuffer);
     _inheritMany(A.NativeTypedData, [A.NativeByteData, A.NativeTypedArray]);
     _inheritMany(A.NativeTypedArray, [A._NativeTypedArrayOfDouble_NativeTypedArray_ListMixin, A._NativeTypedArrayOfInt_NativeTypedArray_ListMixin]);
@@ -28281,10 +28749,10 @@
     _inherit(A.ResultSet, A._ResultSet_Cursor_ListMixin_NonGrowableListMixin);
     _inherit(A._Row_Object_UnmodifiableMapMixin_MapMixin, A._Row_Object_UnmodifiableMapMixin);
     _inherit(A.Row, A._Row_Object_UnmodifiableMapMixin_MapMixin);
+    _inheritMany(A.LinkedListEntry, [A._AsyncCallbackEntry0, A._IndexedDbWorkItem]);
     _inherit(A.WasmSqlite3, A.Sqlite3Implementation);
     _inheritMany(A.Message0, [A.EmptyMessage, A.Flags]);
     _inherit(A.NameAndInt32Flags, A.Flags);
-    _inherit(A._IndexedDbWorkItem, A.LinkedListEntry);
     _inheritMany(A._IndexedDbWorkItem, [A._FunctionWorkItem, A._DeleteFileWorkItem, A._CreateFileWorkItem, A._WriteFileWorkItem]);
     _inheritMany(A.StreamChannelMixin, [A.CloseGuaranteeChannel, A.GuaranteeChannel]);
     _inherit(A._CloseGuaranteeSink, A.DelegatingStreamSink);
@@ -28308,7 +28776,7 @@
     typeUniverse: {eC: new Map(), tR: {}, eT: {}, tPV: {}, sEA: []},
     mangledGlobalNames: {int: "int", double: "double", num: "num", String: "String", bool: "bool", Null: "Null", List: "List", Object: "Object", Map: "Map", JSObject: "JSObject"},
     mangledNames: {},
-    types: ["~()", "~(JSObject)", "Future<~>()", "bool(String)", "double(num)", "Null()", "~(Object,StackTrace)", "~(Object?)", "String(String)", "Null(JSObject)", "~(int)", "int(VirtualFileSystemFile,int)", "Frame()", "Frame(String)", "~(@)", "Object?(Object?)", "~(~())", "Future<Null>()", "~(JSObject?,List<JSObject>?)", "~(RegisteredFunctionSet,int,int,int)", "String(int)", "@()", "String(Frame)", "bool(~)", "Future<int>()", "num?(List<Object?>)", "Null(@)", "~(Object[StackTrace?])", "int(int)", "bool()", "int(VirtualFileSystem,int,int,int)", "int(VirtualFileSystem,int)", "int(VirtualFileSystemFile)", "int(VirtualFileSystemFile,int,int,JavaScriptBigInt)", "~(RegisteredFunctionSet,int)", "Trace(String)", "int(Frame)", "Future<QueryExecutor>()", "Future<QueryResult>()", "@(@,String)", "Null(@,StackTrace)", "int()", "Future<bool>()", "Map<String,@>(List<Object?>)", "int(List<Object?>)", "@(String)", "Null(QueryExecutor)", "Future<bool>(~)", "~(int,@)", "Future<~>(Request)", "int?(int)", "bool(int)", "JSObject(JSArray<Object?>)", "RunningWasmServer()", "Future<Uint8List?>()", "Null(~)", "~(EventSink<Object?>)", "~(bool,bool,bool,List<+(WebStorageApi,String)>)", "Null(Object,StackTrace)", "String(String?)", "String(Object?)", "~(RawSqliteContext,List<RawSqliteValue>)", "ResponsePayload?/(Request)", "~(JavaScriptBigInt,int)", "VirtualFileSystemFile?(VirtualFileSystem,int,int,int,int)", "int(VirtualFileSystem,int,int)", "0&(String,int?)", "int(VirtualFileSystem?,int,int)", "Future<ResponsePayload?>()", "CancellationToken<@>?()", "Request()", "int(VirtualFileSystemFile,JavaScriptBigInt)", "Null(bool)", "Null(~())", "int(int())", "~(~(int,String,int),int,int,int,JavaScriptBigInt)", "~(@,StackTrace)", "SuccessResponse()", "int(RegisteredFunctionSet,int,int,int,int)", "int(int(int),int)", "ExecuteBatchedStatement()", "int(SessionApplyCallbacks,int,int)", "JSObject()", "~(_OpenedFileHandle)", "JSObject(JSObject?)", "Future<~>(int,Uint8List)", "Future<~>(int)", "int(int,int)", "Future<JSObject>(String)", "List<Frame>(Trace)", "int(Trace)", "List<Object?>(JSArray<Object?>)", "String(Trace)", "TableUpdate(Object?)", "~(@,@)", "Frame(String,String)", "Trace()", "int(@,@)", "~(Zone?,ZoneDelegate?,Zone,Object,StackTrace)", "0^(Zone?,ZoneDelegate?,Zone,0^())<Object?>", "0^(Zone?,ZoneDelegate?,Zone,0^(1^),1^)<Object?,Object?>", "0^(Zone?,ZoneDelegate?,Zone,0^(1^,2^),1^,2^)<Object?,Object?,Object?>", "0^()(Zone,ZoneDelegate,Zone,0^())<Object?>", "0^(1^)(Zone,ZoneDelegate,Zone,0^(1^))<Object?,Object?>", "0^(1^,2^)(Zone,ZoneDelegate,Zone,0^(1^,2^))<Object?,Object?,Object?>", "AsyncError?(Zone,ZoneDelegate,Zone,Object,StackTrace?)", "~(Zone?,ZoneDelegate?,Zone,~())", "Timer(Zone,ZoneDelegate,Zone,Duration,~())", "Timer(Zone,ZoneDelegate,Zone,Duration,~(Timer))", "~(Zone,ZoneDelegate,Zone,String)", "~(String)", "Zone(Zone?,ZoneDelegate?,Zone,ZoneSpecification?,Map<Object?,Object?>?)", "0^(0^,0^)<num>", "~(Object?,Object?)", "@(@)", "bool?(List<Object?>)", "bool?(List<@>)", "EmptyMessage(MessageSerializer)", "Flags(MessageSerializer)", "NameAndInt32Flags(MessageSerializer)", "Uint8List()", "int(SessionApplyCallbacks,int)"],
+    types: ["~()", "~(JSObject)", "bool(String)", "Null()", "~(int)", "double(num)", "~(Object,StackTrace)", "~(Object?)", "String(String)", "~(~())", "Future<~>()", "Null(JSObject)", "int(VirtualFileSystemFile,int)", "Frame()", "Frame(String)", "~(@)", "Object?(Object?)", "Future<Null>()", "Future<~>(_IndexedDbTransaction)", "~(JSObject?,List<JSObject>?)", "int(VirtualFileSystemFile)", "~(RegisteredFunctionSet,int,int,int)", "String(int)", "@()", "String(Frame)", "bool(~)", "Future<int>()", "Null(@)", "num?(List<Object?>)", "Null(Object,StackTrace)", "~(Object[StackTrace?])", "bool()", "int(VirtualFileSystem,int,int,int)", "int(VirtualFileSystem,int)", "int(VirtualFileSystemFile,int,int,JavaScriptBigInt)", "~(RegisteredFunctionSet,int)", "Trace(String)", "int(int)", "int(Frame)", "~(EventSink<Object?>)", "Null(@,StackTrace)", "~(int,@)", "Future<~>(Request)", "Future<bool>()", "Map<String,@>(List<Object?>)", "int(List<Object?>)", "int?(int)", "Null(QueryExecutor)", "Future<bool>(~)", "Null(~())", "Null(~)", "ResponsePayload?/(Request)", "bool(int)", "JSObject(JSArray<Object?>)", "RunningWasmServer()", "Future<Uint8List?>()", "Future<QueryExecutor>()", "0&(String,int?)", "~(bool,bool,bool,List<+(WebStorageApi,String)>)", "@(String)", "String(String?)", "String(Object?)", "~(RawSqliteContext,List<RawSqliteValue>)", "int()", "~(Zone,ZoneDelegate,Zone,~())", "~(JavaScriptBigInt,int)", "VirtualFileSystemFile?(VirtualFileSystem,int,int,int,int)", "int(VirtualFileSystem,int,int)", "Future<ResponsePayload?>()", "int(VirtualFileSystem?,int,int)", "CancellationToken<@>?()", "Null(bool)", "Request()", "int(VirtualFileSystemFile,JavaScriptBigInt)", "@(@)", "int(VirtualFileSystemFile,int,int)", "int(int())", "~(~(int,String,int),int,int,int,JavaScriptBigInt)", "~(@,StackTrace)", "SuccessResponse()", "int(RegisteredFunctionSet,int,int,int,int)", "int(int(int),int)", "int(SessionApplyCallbacks,int)", "int(SessionApplyCallbacks,int,int)", "ExecuteBatchedStatement()", "~(_OpenedFileHandle)", "~(@,@)", "JSObject(JSObject?)", "~(ByteBuffer)", "Future<~>(int,Uint8List)", "Future<~>(int)", "List<Object?>(JSArray<Object?>)", "Future<JSObject>(String)", "List<Frame>(Trace)", "int(Trace)", "TableUpdate(Object?)", "String(Trace)", "Future<QueryResult>()", "~(Object?,Object?)", "Frame(String,String)", "Trace()", "int(@,@)", "bool(Object?)", "~(Zone?,ZoneDelegate?,Zone,Object,StackTrace)", "0^(Zone?,ZoneDelegate?,Zone,0^())<Object?>", "0^(Zone?,ZoneDelegate?,Zone,0^(1^),1^)<Object?,Object?>", "0^(Zone?,ZoneDelegate?,Zone,0^(1^,2^),1^,2^)<Object?,Object?,Object?>", "0^()(Zone,ZoneDelegate,Zone,0^())<Object?>", "0^(1^)(Zone,ZoneDelegate,Zone,0^(1^))<Object?,Object?>", "0^(1^,2^)(Zone,ZoneDelegate,Zone,0^(1^,2^))<Object?,Object?,Object?>", "AsyncError?(Zone,ZoneDelegate,Zone,Object,StackTrace?)", "~(Zone?,ZoneDelegate?,Zone,~())", "Timer(Zone,ZoneDelegate,Zone,Duration,~())", "Timer(Zone,ZoneDelegate,Zone,Duration,~(Timer))", "~(Zone,ZoneDelegate,Zone,String)", "~(String)", "Zone(Zone?,ZoneDelegate?,Zone,ZoneSpecification?,Map<Object?,Object?>?)", "0^(0^,0^)<num>", "@(@,String)", "int(int,int)", "bool?(List<Object?>)", "bool?(List<@>)", "EmptyMessage(MessageSerializer)", "Flags(MessageSerializer)", "NameAndInt32Flags(MessageSerializer)", "Uint8List()", "JSObject()"],
     interceptorsByTag: null,
     leafTags: null,
     arrayRti: Symbol("$ti"),
@@ -28318,7 +28786,7 @@
       "2;result,resultCode": (t1, t2) => o => o instanceof A._Record_2_result_resultCode && t1._is(o._0) && t2._is(o._1)
     }
   };
-  A._Universe_addRules(init.typeUniverse, JSON.parse('{"JavaScriptFunction":"LegacyJavaScriptObject","PlainJavaScriptObject":"LegacyJavaScriptObject","UnknownJavaScriptObject":"LegacyJavaScriptObject","NativeSharedArrayBuffer":"NativeByteBuffer","JSArray":{"List":["1"],"EfficientLengthIterable":["1"],"JSObject":[],"Iterable":["1"],"JSIndexable":["1"]},"JSBool":{"bool":[],"TrustedGetRuntimeType":[]},"JSNull":{"Null":[],"TrustedGetRuntimeType":[]},"JavaScriptObject":{"JSObject":[]},"LegacyJavaScriptObject":{"JSObject":[]},"JSArraySafeToStringHook":{"SafeToStringHook":[]},"JSUnmodifiableArray":{"JSArray":["1"],"List":["1"],"EfficientLengthIterable":["1"],"JSObject":[],"Iterable":["1"],"JSIndexable":["1"]},"ArrayIterator":{"Iterator":["1"]},"JSNumber":{"double":[],"num":[],"Comparable":["num"]},"JSInt":{"double":[],"int":[],"num":[],"Comparable":["num"],"TrustedGetRuntimeType":[]},"JSNumNotInt":{"double":[],"num":[],"Comparable":["num"],"TrustedGetRuntimeType":[]},"JSString":{"String":[],"Comparable":["String"],"Pattern":[],"JSIndexable":["@"],"TrustedGetRuntimeType":[]},"_CastIterableBase":{"Iterable":["2"]},"CastIterator":{"Iterator":["2"]},"CastIterable":{"_CastIterableBase":["1","2"],"Iterable":["2"],"Iterable.E":"2"},"_EfficientLengthCastIterable":{"CastIterable":["1","2"],"_CastIterableBase":["1","2"],"EfficientLengthIterable":["2"],"Iterable":["2"],"Iterable.E":"2"},"_CastListBase":{"ListBase":["2"],"List":["2"],"_CastIterableBase":["1","2"],"EfficientLengthIterable":["2"],"Iterable":["2"]},"CastList":{"_CastListBase":["1","2"],"ListBase":["2"],"List":["2"],"_CastIterableBase":["1","2"],"EfficientLengthIterable":["2"],"Iterable":["2"],"ListBase.E":"2","Iterable.E":"2"},"LateError":{"Error":[]},"CodeUnits":{"ListBase":["int"],"UnmodifiableListMixin":["int"],"List":["int"],"EfficientLengthIterable":["int"],"Iterable":["int"],"ListBase.E":"int","UnmodifiableListMixin.E":"int"},"EfficientLengthIterable":{"Iterable":["1"]},"ListIterable":{"EfficientLengthIterable":["1"],"Iterable":["1"]},"SubListIterable":{"ListIterable":["1"],"EfficientLengthIterable":["1"],"Iterable":["1"],"Iterable.E":"1","ListIterable.E":"1"},"ListIterator":{"Iterator":["1"]},"MappedIterable":{"Iterable":["2"],"Iterable.E":"2"},"EfficientLengthMappedIterable":{"MappedIterable":["1","2"],"EfficientLengthIterable":["2"],"Iterable":["2"],"Iterable.E":"2"},"MappedIterator":{"Iterator":["2"]},"MappedListIterable":{"ListIterable":["2"],"EfficientLengthIterable":["2"],"Iterable":["2"],"Iterable.E":"2","ListIterable.E":"2"},"WhereIterable":{"Iterable":["1"],"Iterable.E":"1"},"WhereIterator":{"Iterator":["1"]},"ExpandIterable":{"Iterable":["2"],"Iterable.E":"2"},"ExpandIterator":{"Iterator":["2"]},"TakeIterable":{"Iterable":["1"],"Iterable.E":"1"},"EfficientLengthTakeIterable":{"TakeIterable":["1"],"EfficientLengthIterable":["1"],"Iterable":["1"],"Iterable.E":"1"},"TakeIterator":{"Iterator":["1"]},"SkipIterable":{"Iterable":["1"],"Iterable.E":"1"},"EfficientLengthSkipIterable":{"SkipIterable":["1"],"EfficientLengthIterable":["1"],"Iterable":["1"],"Iterable.E":"1"},"SkipIterator":{"Iterator":["1"]},"SkipWhileIterable":{"Iterable":["1"],"Iterable.E":"1"},"SkipWhileIterator":{"Iterator":["1"]},"EmptyIterable":{"EfficientLengthIterable":["1"],"Iterable":["1"],"Iterable.E":"1"},"EmptyIterator":{"Iterator":["1"]},"WhereTypeIterable":{"Iterable":["1"],"Iterable.E":"1"},"WhereTypeIterator":{"Iterator":["1"]},"IndexedIterable":{"Iterable":["+(int,1)"],"Iterable.E":"+(int,1)"},"EfficientLengthIndexedIterable":{"IndexedIterable":["1"],"EfficientLengthIterable":["+(int,1)"],"Iterable":["+(int,1)"],"Iterable.E":"+(int,1)"},"IndexedIterator":{"Iterator":["+(int,1)"]},"UnmodifiableListBase":{"ListBase":["1"],"UnmodifiableListMixin":["1"],"List":["1"],"EfficientLengthIterable":["1"],"Iterable":["1"]},"ReversedListIterable":{"ListIterable":["1"],"EfficientLengthIterable":["1"],"Iterable":["1"],"Iterable.E":"1","ListIterable.E":"1"},"_Record_2":{"_Record2":[],"_Record":[]},"_Record_2_file_outFlags":{"_Record2":[],"_Record":[]},"_Record_2_result_resultCode":{"_Record2":[],"_Record":[]},"ConstantMap":{"Map":["1","2"]},"ConstantStringMap":{"ConstantMap":["1","2"],"Map":["1","2"]},"_KeysOrValues":{"Iterable":["1"],"Iterable.E":"1"},"_KeysOrValuesOrElementsIterator":{"Iterator":["1"]},"Instantiation":{"Closure":[],"Function":[]},"Instantiation1":{"Closure":[],"Function":[]},"NullError":{"TypeError":[],"Error":[]},"JsNoSuchMethodError":{"Error":[]},"UnknownJsTypeError":{"Error":[]},"NullThrownFromJavaScriptException":{"Exception":[]},"_StackTrace":{"StackTrace":[]},"Closure":{"Function":[]},"Closure0Args":{"Closure":[],"Function":[]},"Closure2Args":{"Closure":[],"Function":[]},"TearOffClosure":{"Closure":[],"Function":[]},"StaticClosure":{"Closure":[],"Function":[]},"BoundClosure":{"Closure":[],"Function":[]},"RuntimeError":{"Error":[]},"JsLinkedHashMap":{"MapBase":["1","2"],"LinkedHashMap":["1","2"],"Map":["1","2"],"MapBase.K":"1","MapBase.V":"2"},"LinkedHashMapKeysIterable":{"EfficientLengthIterable":["1"],"Iterable":["1"],"Iterable.E":"1"},"LinkedHashMapKeyIterator":{"Iterator":["1"]},"LinkedHashMapValuesIterable":{"EfficientLengthIterable":["1"],"Iterable":["1"],"Iterable.E":"1"},"LinkedHashMapValueIterator":{"Iterator":["1"]},"LinkedHashMapEntriesIterable":{"EfficientLengthIterable":["MapEntry<1,2>"],"Iterable":["MapEntry<1,2>"],"Iterable.E":"MapEntry<1,2>"},"LinkedHashMapEntryIterator":{"Iterator":["MapEntry<1,2>"]},"_Record2":{"_Record":[]},"JSSyntaxRegExp":{"RegExp":[],"Pattern":[]},"_MatchImplementation":{"RegExpMatch":[],"Match":[]},"_AllMatchesIterable":{"Iterable":["RegExpMatch"],"Iterable.E":"RegExpMatch"},"_AllMatchesIterator":{"Iterator":["RegExpMatch"]},"StringMatch":{"Match":[]},"_StringAllMatchesIterable":{"Iterable":["Match"],"Iterable.E":"Match"},"_StringAllMatchesIterator":{"Iterator":["Match"]},"NativeArrayBuffer":{"NativeByteBuffer":[],"JSObject":[],"ByteBuffer":[],"TrustedGetRuntimeType":[]},"NativeByteData":{"ByteData":[],"JSObject":[],"TrustedGetRuntimeType":[]},"NativeInt32List":{"NativeTypedArrayOfInt":[],"Int32List":[],"ListBase":["int"],"TypedDataList":["int"],"NativeTypedArray":["int"],"List":["int"],"JavaScriptIndexingBehavior":["int"],"EfficientLengthIterable":["int"],"JSObject":[],"JSIndexable":["int"],"Iterable":["int"],"FixedLengthListMixin":["int"],"TrustedGetRuntimeType":[],"ListBase.E":"int"},"NativeUint8List":{"NativeTypedArrayOfInt":[],"Uint8List":[],"ListBase":["int"],"TypedDataList":["int"],"NativeTypedArray":["int"],"List":["int"],"JavaScriptIndexingBehavior":["int"],"EfficientLengthIterable":["int"],"JSObject":[],"JSIndexable":["int"],"Iterable":["int"],"FixedLengthListMixin":["int"],"TrustedGetRuntimeType":[],"ListBase.E":"int"},"NativeByteBuffer":{"JSObject":[],"ByteBuffer":[],"TrustedGetRuntimeType":[]},"NativeTypedData":{"JSObject":[]},"_UnmodifiableNativeByteBufferView":{"ByteBuffer":[]},"NativeTypedArray":{"JavaScriptIndexingBehavior":["1"],"JSObject":[],"JSIndexable":["1"]},"NativeTypedArrayOfDouble":{"ListBase":["double"],"NativeTypedArray":["double"],"List":["double"],"JavaScriptIndexingBehavior":["double"],"EfficientLengthIterable":["double"],"JSObject":[],"JSIndexable":["double"],"Iterable":["double"],"FixedLengthListMixin":["double"]},"NativeTypedArrayOfInt":{"ListBase":["int"],"NativeTypedArray":["int"],"List":["int"],"JavaScriptIndexingBehavior":["int"],"EfficientLengthIterable":["int"],"JSObject":[],"JSIndexable":["int"],"Iterable":["int"],"FixedLengthListMixin":["int"]},"NativeFloat32List":{"NativeTypedArrayOfDouble":[],"Float32List":[],"ListBase":["double"],"TypedDataList":["double"],"NativeTypedArray":["double"],"List":["double"],"JavaScriptIndexingBehavior":["double"],"EfficientLengthIterable":["double"],"JSObject":[],"JSIndexable":["double"],"Iterable":["double"],"FixedLengthListMixin":["double"],"TrustedGetRuntimeType":[],"ListBase.E":"double"},"NativeFloat64List":{"NativeTypedArrayOfDouble":[],"Float64List":[],"ListBase":["double"],"TypedDataList":["double"],"NativeTypedArray":["double"],"List":["double"],"JavaScriptIndexingBehavior":["double"],"EfficientLengthIterable":["double"],"JSObject":[],"JSIndexable":["double"],"Iterable":["double"],"FixedLengthListMixin":["double"],"TrustedGetRuntimeType":[],"ListBase.E":"double"},"NativeInt16List":{"NativeTypedArrayOfInt":[],"Int16List":[],"ListBase":["int"],"TypedDataList":["int"],"NativeTypedArray":["int"],"List":["int"],"JavaScriptIndexingBehavior":["int"],"EfficientLengthIterable":["int"],"JSObject":[],"JSIndexable":["int"],"Iterable":["int"],"FixedLengthListMixin":["int"],"TrustedGetRuntimeType":[],"ListBase.E":"int"},"NativeInt8List":{"NativeTypedArrayOfInt":[],"Int8List":[],"ListBase":["int"],"TypedDataList":["int"],"NativeTypedArray":["int"],"List":["int"],"JavaScriptIndexingBehavior":["int"],"EfficientLengthIterable":["int"],"JSObject":[],"JSIndexable":["int"],"Iterable":["int"],"FixedLengthListMixin":["int"],"TrustedGetRuntimeType":[],"ListBase.E":"int"},"NativeUint16List":{"NativeTypedArrayOfInt":[],"Uint16List":[],"ListBase":["int"],"TypedDataList":["int"],"NativeTypedArray":["int"],"List":["int"],"JavaScriptIndexingBehavior":["int"],"EfficientLengthIterable":["int"],"JSObject":[],"JSIndexable":["int"],"Iterable":["int"],"FixedLengthListMixin":["int"],"TrustedGetRuntimeType":[],"ListBase.E":"int"},"NativeUint32List":{"NativeTypedArrayOfInt":[],"Uint32List":[],"ListBase":["int"],"TypedDataList":["int"],"NativeTypedArray":["int"],"List":["int"],"JavaScriptIndexingBehavior":["int"],"EfficientLengthIterable":["int"],"JSObject":[],"JSIndexable":["int"],"Iterable":["int"],"FixedLengthListMixin":["int"],"TrustedGetRuntimeType":[],"ListBase.E":"int"},"NativeUint8ClampedList":{"NativeTypedArrayOfInt":[],"Uint8ClampedList":[],"ListBase":["int"],"TypedDataList":["int"],"NativeTypedArray":["int"],"List":["int"],"JavaScriptIndexingBehavior":["int"],"EfficientLengthIterable":["int"],"JSObject":[],"JSIndexable":["int"],"Iterable":["int"],"FixedLengthListMixin":["int"],"TrustedGetRuntimeType":[],"ListBase.E":"int"},"_Error":{"Error":[]},"_TypeError":{"TypeError":[],"Error":[]},"AsyncError":{"Error":[]},"_BufferingStreamSubscription":{"StreamSubscription":["1"],"_EventSink":["1"],"_EventDispatch":["1"],"_BufferingStreamSubscription.T":"1"},"_HandlerEventSink":{"EventSink":["1"]},"_TimerImpl":{"Timer":[]},"_AsyncAwaitCompleter":{"Completer":["1"]},"_SyncStarIterator":{"Iterator":["1"]},"_SyncStarIterable":{"Iterable":["1"],"Iterable.E":"1"},"_BroadcastStream":{"_ControllerStream":["1"],"_StreamImpl":["1"],"Stream":["1"],"Stream.T":"1"},"_BroadcastSubscription":{"_ControllerSubscription":["1"],"_BufferingStreamSubscription":["1"],"StreamSubscription":["1"],"_EventSink":["1"],"_EventDispatch":["1"],"_BufferingStreamSubscription.T":"1"},"_BroadcastStreamController":{"StreamController":["1"],"StreamSink":["1"],"EventSink":["1"],"_StreamControllerLifecycle":["1"],"_EventSink":["1"],"_EventDispatch":["1"]},"_SyncBroadcastStreamController":{"_BroadcastStreamController":["1"],"StreamController":["1"],"StreamSink":["1"],"EventSink":["1"],"_StreamControllerLifecycle":["1"],"_EventSink":["1"],"_EventDispatch":["1"]},"_Completer":{"Completer":["1"]},"_AsyncCompleter":{"_Completer":["1"],"Completer":["1"]},"_SyncCompleter":{"_Completer":["1"],"Completer":["1"]},"_Future":{"Future":["1"]},"StreamTransformerBase":{"StreamTransformer":["1","2"]},"_StreamController":{"StreamController":["1"],"StreamSink":["1"],"EventSink":["1"],"_StreamControllerLifecycle":["1"],"_EventSink":["1"],"_EventDispatch":["1"]},"_AsyncStreamController":{"_AsyncStreamControllerDispatch":["1"],"_StreamController":["1"],"StreamController":["1"],"StreamSink":["1"],"EventSink":["1"],"_StreamControllerLifecycle":["1"],"_EventSink":["1"],"_EventDispatch":["1"]},"_SyncStreamController":{"_SyncStreamControllerDispatch":["1"],"_StreamController":["1"],"StreamController":["1"],"StreamSink":["1"],"EventSink":["1"],"_StreamControllerLifecycle":["1"],"_EventSink":["1"],"_EventDispatch":["1"]},"_ControllerStream":{"_StreamImpl":["1"],"Stream":["1"],"Stream.T":"1"},"_ControllerSubscription":{"_BufferingStreamSubscription":["1"],"StreamSubscription":["1"],"_EventSink":["1"],"_EventDispatch":["1"],"_BufferingStreamSubscription.T":"1"},"_StreamSinkWrapper":{"StreamSink":["1"],"EventSink":["1"]},"_StreamImpl":{"Stream":["1"]},"_DelayedData":{"_DelayedEvent":["1"]},"_DelayedError":{"_DelayedEvent":["@"]},"_DelayedDone":{"_DelayedEvent":["@"]},"_DoneStreamSubscription":{"StreamSubscription":["1"]},"_ForwardingStream":{"Stream":["2"]},"_ForwardingStreamSubscription":{"_BufferingStreamSubscription":["2"],"StreamSubscription":["2"],"_EventSink":["2"],"_EventDispatch":["2"],"_BufferingStreamSubscription.T":"2"},"_MapStream":{"_ForwardingStream":["1","2"],"Stream":["2"],"Stream.T":"2"},"_EventSinkWrapper":{"EventSink":["1"]},"_SinkTransformerStreamSubscription":{"_BufferingStreamSubscription":["2"],"StreamSubscription":["2"],"_EventSink":["2"],"_EventDispatch":["2"],"_BufferingStreamSubscription.T":"2"},"_StreamSinkTransformer":{"StreamTransformer":["1","2"]},"_BoundSinkStream":{"Stream":["2"],"Stream.T":"2"},"_StreamHandlerTransformer":{"_StreamSinkTransformer":["1","2"],"StreamTransformer":["1","2"]},"_ZoneSpecification":{"ZoneSpecification":[]},"_ZoneDelegate":{"ZoneDelegate":[]},"_Zone":{"Zone":[]},"_CustomZone":{"_Zone":[],"Zone":[]},"_RootZone":{"_Zone":[],"Zone":[]},"_HashMap":{"MapBase":["1","2"],"Map":["1","2"],"MapBase.K":"1","MapBase.V":"2"},"_IdentityHashMap":{"_HashMap":["1","2"],"MapBase":["1","2"],"Map":["1","2"],"MapBase.K":"1","MapBase.V":"2"},"_HashMapKeyIterable":{"EfficientLengthIterable":["1"],"Iterable":["1"],"Iterable.E":"1"},"_HashMapKeyIterator":{"Iterator":["1"]},"_LinkedHashSet":{"_SetBase":["1"],"SetBase":["1"],"Set":["1"],"EfficientLengthIterable":["1"],"Iterable":["1"]},"_LinkedHashSetIterator":{"Iterator":["1"]},"LinkedList":{"Iterable":["1"],"Iterable.E":"1"},"_LinkedListIterator":{"Iterator":["1"]},"ListBase":{"List":["1"],"EfficientLengthIterable":["1"],"Iterable":["1"]},"MapBase":{"Map":["1","2"]},"_MapBaseValueIterable":{"EfficientLengthIterable":["2"],"Iterable":["2"],"Iterable.E":"2"},"_MapBaseValueIterator":{"Iterator":["2"]},"SetBase":{"Set":["1"],"EfficientLengthIterable":["1"],"Iterable":["1"]},"_SetBase":{"SetBase":["1"],"Set":["1"],"EfficientLengthIterable":["1"],"Iterable":["1"]},"AsciiCodec":{"Codec":["String","List<int>"]},"_UnicodeSubsetEncoder":{"Converter":["String","List<int>"],"StreamTransformer":["String","List<int>"]},"AsciiEncoder":{"Converter":["String","List<int>"],"StreamTransformer":["String","List<int>"]},"Base64Codec":{"Codec":["List<int>","String"]},"Base64Encoder":{"Converter":["List<int>","String"],"StreamTransformer":["List<int>","String"]},"_FusedCodec":{"Codec":["1","3"]},"Converter":{"StreamTransformer":["1","2"]},"Encoding":{"Codec":["String","List<int>"]},"Utf8Codec":{"Codec":["String","List<int>"]},"Utf8Encoder":{"Converter":["String","List<int>"],"StreamTransformer":["String","List<int>"]},"BigInt":{"Comparable":["BigInt"]},"DateTime":{"Comparable":["DateTime"]},"double":{"num":[],"Comparable":["num"]},"Duration":{"Comparable":["Duration"]},"int":{"num":[],"Comparable":["num"]},"List":{"EfficientLengthIterable":["1"],"Iterable":["1"]},"num":{"Comparable":["num"]},"RegExpMatch":{"Match":[]},"String":{"Comparable":["String"],"Pattern":[]},"_BigIntImpl":{"BigInt":[],"Comparable":["BigInt"]},"_FinalizationRegistryWrapper":{"Finalizer":["1"]},"_Enum":{"Enum":[]},"AssertionError":{"Error":[]},"TypeError":{"Error":[]},"ArgumentError":{"Error":[]},"RangeError":{"Error":[]},"IndexError":{"Error":[]},"UnsupportedError":{"Error":[]},"UnimplementedError":{"Error":[]},"StateError":{"Error":[]},"ConcurrentModificationError":{"Error":[]},"OutOfMemoryError":{"Error":[]},"StackOverflowError":{"Error":[]},"_Exception":{"Exception":[]},"FormatException":{"Exception":[]},"IntegerDivisionByZeroException":{"Exception":[],"Error":[]},"_StringStackTrace":{"StackTrace":[]},"StringBuffer":{"StringSink":[]},"_Uri":{"Uri":[]},"_SimpleUri":{"Uri":[]},"_DataUri":{"Uri":[]},"NullRejectionException":{"Exception":[]},"_JSSecureRandom":{"Random":[]},"DelegatingStreamSink":{"StreamSink":["1"],"EventSink":["1"]},"ConnectionClosedException":{"Exception":[]},"DriftRemoteException":{"Exception":[]},"Request":{"Message":[]},"SuccessResponse":{"Message":[]},"StatementMethod":{"Enum":[]},"ExecuteBatchedStatement":{"RequestPayload":[]},"NestedExecutorControl":{"Enum":[]},"NotifyTablesUpdated":{"RequestPayload":[]},"PrimitiveResponsePayload":{"ResponsePayload":[]},"ErrorResponse":{"Message":[]},"CancelledResponse":{"Message":[]},"NoArgsRequest":{"Enum":[],"RequestPayload":[]},"ExecuteQuery":{"RequestPayload":[]},"RequestCancellation":{"RequestPayload":[]},"RunNestedExecutorControl":{"RequestPayload":[]},"EnsureOpen":{"RequestPayload":[]},"ServerInfo":{"RequestPayload":[]},"RunBeforeOpen":{"RequestPayload":[]},"SelectResult":{"ResponsePayload":[]},"ServerImplementation":{"DriftServer":[]},"_ServerDbUser":{"QueryExecutorUser":[]},"UpdateKind":{"Enum":[]},"CancellationException":{"Exception":[]},"NoVersionDelegate":{"DbVersionDelegate":[]},"DynamicVersionDelegate":{"DbVersionDelegate":[]},"_BaseExecutor":{"QueryExecutor":[]},"_TransactionExecutor":{"_BaseExecutor":[],"TransactionExecutor":[],"QueryExecutor":[]},"_StatementBasedTransactionExecutor":{"_BaseExecutor":[],"TransactionExecutor":[],"QueryExecutor":[]},"DelegatedDatabase":{"_BaseExecutor":[],"QueryExecutor":[]},"_BeforeOpeningExecutor":{"_BaseExecutor":[],"QueryExecutor":[]},"_ExclusiveExecutor":{"_BaseExecutor":[],"QueryExecutor":[]},"_InterceptedExecutor":{"QueryExecutor":[]},"_InterceptedTransactionExecutor":{"TransactionExecutor":[],"QueryExecutor":[]},"SqlDialect":{"Enum":[]},"Sqlite3Delegate":{"DatabaseDelegate":[]},"_SqliteVersionDelegate":{"DbVersionDelegate":[]},"LazyDatabase":{"QueryExecutor":[]},"SharedWorkerCompatibilityResult":{"WasmInitializationMessage":[]},"ProtocolVersion":{"Enum":[]},"CompatibilityResult":{"WasmInitializationMessage":[]},"WorkerError":{"WasmInitializationMessage":[],"Exception":[]},"ServeDriftDatabase":{"WasmInitializationMessage":[]},"RequestCompatibilityCheck":{"WasmInitializationMessage":[]},"DedicatedWorkerCompatibilityResult":{"WasmInitializationMessage":[]},"StartFileSystemServer":{"WasmInitializationMessage":[]},"DeleteDatabase":{"WasmInitializationMessage":[]},"_CloseVfsOnClose":{"QueryInterceptor":[]},"WasmStorageImplementation":{"Enum":[]},"WebStorageApi":{"Enum":[]},"WasmDatabase":{"DelegatedDatabase":[],"_BaseExecutor":[],"QueryExecutor":[]},"_WasmDelegate":{"Sqlite3Delegate":["CommonDatabase"],"DatabaseDelegate":[],"Sqlite3Delegate.0":"CommonDatabase"},"PathException":{"Exception":[]},"PosixStyle":{"InternalStyle":[]},"UrlStyle":{"InternalStyle":[]},"WindowsStyle":{"InternalStyle":[]},"SqliteException":{"Exception":[]},"SqliteArguments":{"List":["Object?"],"EfficientLengthIterable":["Object?"],"Iterable":["Object?"]},"DatabaseImplementation":{"CommonDatabase":[]},"ValueList":{"ListBase":["Object?"],"List":["Object?"],"EfficientLengthIterable":["Object?"],"Iterable":["Object?"],"ListBase.E":"Object?"},"Sqlite3Implementation":{"CommonSqlite3":[]},"StatementImplementation":{"CommonPreparedStatement":[]},"InMemoryFileSystem":{"VirtualFileSystem":[]},"_InMemoryFile":{"VirtualFileSystemFile":[]},"Row":{"UnmodifiableMapMixin":["String","@"],"MapBase":["String","@"],"Map":["String","@"],"MapBase.K":"String","MapBase.V":"@"},"ResultSet":{"ListBase":["Row"],"NonGrowableListMixin":["Row"],"List":["Row"],"EfficientLengthIterable":["Row"],"Cursor":[],"Iterable":["Row"],"ListBase.E":"Row"},"_ResultIterator":{"Iterator":["Row"]},"OpenMode":{"Enum":[]},"IndexedParameters":{"StatementParameters":[]},"VfsException":{"Exception":[]},"BaseVirtualFileSystem":{"VirtualFileSystem":[]},"BaseVfsFile":{"VirtualFileSystemFile":[]},"WasmValue":{"RawSqliteValue":[]},"WasmSqliteBindings":{"RawSqliteBindings":[]},"WasmDatabase0":{"RawSqliteDatabase":[]},"WasmStatement":{"RawSqliteStatement":[]},"WasmContext":{"RawSqliteContext":[]},"WasmValueList":{"ListBase":["WasmValue"],"List":["WasmValue"],"EfficientLengthIterable":["WasmValue"],"Iterable":["WasmValue"],"ListBase.E":"WasmValue"},"AsyncJavaScriptIteratable":{"Stream":["1"],"Stream.T":"1"},"WasmSqlite3":{"CommonSqlite3":[]},"WasmVfs":{"VirtualFileSystem":[]},"WasmFile":{"VirtualFileSystemFile":[]},"WorkerOperation":{"Enum":[]},"EmptyMessage":{"Message0":[]},"Flags":{"Message0":[]},"NameAndInt32Flags":{"Flags":[],"Message0":[]},"IndexedDbFileSystem":{"VirtualFileSystem":[]},"_IndexedDbWorkItem":{"LinkedListEntry":["_IndexedDbWorkItem"]},"_IndexedDbFile":{"VirtualFileSystemFile":[]},"_FunctionWorkItem":{"_IndexedDbWorkItem":[],"LinkedListEntry":["_IndexedDbWorkItem"],"LinkedListEntry.E":"_IndexedDbWorkItem"},"_DeleteFileWorkItem":{"_IndexedDbWorkItem":[],"LinkedListEntry":["_IndexedDbWorkItem"],"LinkedListEntry.E":"_IndexedDbWorkItem"},"_CreateFileWorkItem":{"_IndexedDbWorkItem":[],"LinkedListEntry":["_IndexedDbWorkItem"],"LinkedListEntry.E":"_IndexedDbWorkItem"},"_WriteFileWorkItem":{"_IndexedDbWorkItem":[],"LinkedListEntry":["_IndexedDbWorkItem"],"LinkedListEntry.E":"_IndexedDbWorkItem"},"FileType":{"Enum":[]},"SimpleOpfsFileSystem":{"VirtualFileSystem":[]},"_SimpleOpfsFile":{"VirtualFileSystemFile":[]},"Chain":{"StackTrace":[]},"LazyTrace":{"Trace":[],"StackTrace":[]},"Trace":{"StackTrace":[]},"UnparsedFrame":{"Frame":[]},"CloseGuaranteeChannel":{"StreamChannelMixin":["1"],"StreamChannel":["1"]},"_CloseGuaranteeStream":{"Stream":["1"],"Stream.T":"1"},"_CloseGuaranteeSink":{"DelegatingStreamSink":["1"],"StreamSink":["1"],"EventSink":["1"]},"GuaranteeChannel":{"StreamChannelMixin":["1"],"StreamChannel":["1"]},"_GuaranteeSink":{"StreamSink":["1"],"EventSink":["1"]},"StreamChannelMixin":{"StreamChannel":["1"]},"Uint8Buffer":{"TypedDataBuffer":["int"],"ListBase":["int"],"List":["int"],"EfficientLengthIterable":["int"],"Iterable":["int"],"ListBase.E":"int","TypedDataBuffer.E":"int"},"TypedDataBuffer":{"ListBase":["1"],"List":["1"],"EfficientLengthIterable":["1"],"Iterable":["1"]},"_IntBuffer":{"TypedDataBuffer":["int"],"ListBase":["int"],"List":["int"],"EfficientLengthIterable":["int"],"Iterable":["int"]},"_EventStream":{"Stream":["1"],"Stream.T":"1"},"_EventStreamSubscription":{"StreamSubscription":["1"]},"Int8List":{"TypedDataList":["int"],"List":["int"],"EfficientLengthIterable":["int"],"Iterable":["int"]},"Uint8List":{"TypedDataList":["int"],"List":["int"],"EfficientLengthIterable":["int"],"Iterable":["int"]},"Uint8ClampedList":{"TypedDataList":["int"],"List":["int"],"EfficientLengthIterable":["int"],"Iterable":["int"]},"Int16List":{"TypedDataList":["int"],"List":["int"],"EfficientLengthIterable":["int"],"Iterable":["int"]},"Uint16List":{"TypedDataList":["int"],"List":["int"],"EfficientLengthIterable":["int"],"Iterable":["int"]},"Int32List":{"TypedDataList":["int"],"List":["int"],"EfficientLengthIterable":["int"],"Iterable":["int"]},"Uint32List":{"TypedDataList":["int"],"List":["int"],"EfficientLengthIterable":["int"],"Iterable":["int"]},"Float32List":{"TypedDataList":["double"],"List":["double"],"EfficientLengthIterable":["double"],"Iterable":["double"]},"Float64List":{"TypedDataList":["double"],"List":["double"],"EfficientLengthIterable":["double"],"Iterable":["double"]}}'));
+  A._Universe_addRules(init.typeUniverse, JSON.parse('{"JavaScriptFunction":"LegacyJavaScriptObject","PlainJavaScriptObject":"LegacyJavaScriptObject","UnknownJavaScriptObject":"LegacyJavaScriptObject","NativeSharedArrayBuffer":"NativeByteBuffer","JSArray":{"List":["1"],"EfficientLengthIterable":["1"],"JSObject":[],"Iterable":["1"],"JSIndexable":["1"]},"JSBool":{"bool":[],"TrustedGetRuntimeType":[]},"JSNull":{"Null":[],"TrustedGetRuntimeType":[]},"JavaScriptObject":{"JSObject":[]},"LegacyJavaScriptObject":{"JSObject":[]},"JSArraySafeToStringHook":{"SafeToStringHook":[]},"JSUnmodifiableArray":{"JSArray":["1"],"List":["1"],"EfficientLengthIterable":["1"],"JSObject":[],"Iterable":["1"],"JSIndexable":["1"]},"ArrayIterator":{"Iterator":["1"]},"JSNumber":{"double":[],"num":[],"Comparable":["num"]},"JSInt":{"double":[],"int":[],"num":[],"Comparable":["num"],"TrustedGetRuntimeType":[]},"JSNumNotInt":{"double":[],"num":[],"Comparable":["num"],"TrustedGetRuntimeType":[]},"JSString":{"String":[],"Comparable":["String"],"Pattern":[],"JSIndexable":["@"],"TrustedGetRuntimeType":[]},"_CastIterableBase":{"Iterable":["2"]},"CastIterator":{"Iterator":["2"]},"CastIterable":{"_CastIterableBase":["1","2"],"Iterable":["2"],"Iterable.E":"2"},"_EfficientLengthCastIterable":{"CastIterable":["1","2"],"_CastIterableBase":["1","2"],"EfficientLengthIterable":["2"],"Iterable":["2"],"Iterable.E":"2"},"_CastListBase":{"ListBase":["2"],"List":["2"],"_CastIterableBase":["1","2"],"EfficientLengthIterable":["2"],"Iterable":["2"]},"CastList":{"_CastListBase":["1","2"],"ListBase":["2"],"List":["2"],"_CastIterableBase":["1","2"],"EfficientLengthIterable":["2"],"Iterable":["2"],"ListBase.E":"2","Iterable.E":"2"},"LateError":{"Error":[]},"CodeUnits":{"ListBase":["int"],"UnmodifiableListMixin":["int"],"List":["int"],"EfficientLengthIterable":["int"],"Iterable":["int"],"ListBase.E":"int","UnmodifiableListMixin.E":"int"},"EfficientLengthIterable":{"Iterable":["1"]},"ListIterable":{"EfficientLengthIterable":["1"],"Iterable":["1"]},"SubListIterable":{"ListIterable":["1"],"EfficientLengthIterable":["1"],"Iterable":["1"],"Iterable.E":"1","ListIterable.E":"1"},"ListIterator":{"Iterator":["1"]},"MappedIterable":{"Iterable":["2"],"Iterable.E":"2"},"EfficientLengthMappedIterable":{"MappedIterable":["1","2"],"EfficientLengthIterable":["2"],"Iterable":["2"],"Iterable.E":"2"},"MappedIterator":{"Iterator":["2"]},"MappedListIterable":{"ListIterable":["2"],"EfficientLengthIterable":["2"],"Iterable":["2"],"Iterable.E":"2","ListIterable.E":"2"},"WhereIterable":{"Iterable":["1"],"Iterable.E":"1"},"WhereIterator":{"Iterator":["1"]},"ExpandIterable":{"Iterable":["2"],"Iterable.E":"2"},"ExpandIterator":{"Iterator":["2"]},"TakeIterable":{"Iterable":["1"],"Iterable.E":"1"},"EfficientLengthTakeIterable":{"TakeIterable":["1"],"EfficientLengthIterable":["1"],"Iterable":["1"],"Iterable.E":"1"},"TakeIterator":{"Iterator":["1"]},"SkipIterable":{"Iterable":["1"],"Iterable.E":"1"},"EfficientLengthSkipIterable":{"SkipIterable":["1"],"EfficientLengthIterable":["1"],"Iterable":["1"],"Iterable.E":"1"},"SkipIterator":{"Iterator":["1"]},"SkipWhileIterable":{"Iterable":["1"],"Iterable.E":"1"},"SkipWhileIterator":{"Iterator":["1"]},"EmptyIterable":{"EfficientLengthIterable":["1"],"Iterable":["1"],"Iterable.E":"1"},"EmptyIterator":{"Iterator":["1"]},"WhereTypeIterable":{"Iterable":["1"],"Iterable.E":"1"},"WhereTypeIterator":{"Iterator":["1"]},"IndexedIterable":{"Iterable":["+(int,1)"],"Iterable.E":"+(int,1)"},"EfficientLengthIndexedIterable":{"IndexedIterable":["1"],"EfficientLengthIterable":["+(int,1)"],"Iterable":["+(int,1)"],"Iterable.E":"+(int,1)"},"IndexedIterator":{"Iterator":["+(int,1)"]},"UnmodifiableListBase":{"ListBase":["1"],"UnmodifiableListMixin":["1"],"List":["1"],"EfficientLengthIterable":["1"],"Iterable":["1"]},"ReversedListIterable":{"ListIterable":["1"],"EfficientLengthIterable":["1"],"Iterable":["1"],"Iterable.E":"1","ListIterable.E":"1"},"_Record_2":{"_Record2":[],"_Record":[]},"_Record_2_file_outFlags":{"_Record2":[],"_Record":[]},"_Record_2_result_resultCode":{"_Record2":[],"_Record":[]},"ConstantMap":{"Map":["1","2"]},"ConstantStringMap":{"ConstantMap":["1","2"],"Map":["1","2"]},"_KeysOrValues":{"Iterable":["1"],"Iterable.E":"1"},"_KeysOrValuesOrElementsIterator":{"Iterator":["1"]},"Instantiation":{"Closure":[],"Function":[]},"Instantiation1":{"Closure":[],"Function":[]},"NullError":{"TypeError":[],"Error":[]},"JsNoSuchMethodError":{"Error":[]},"UnknownJsTypeError":{"Error":[]},"NullThrownFromJavaScriptException":{"Exception":[]},"_StackTrace":{"StackTrace":[]},"Closure":{"Function":[]},"Closure0Args":{"Closure":[],"Function":[]},"Closure2Args":{"Closure":[],"Function":[]},"TearOffClosure":{"Closure":[],"Function":[]},"StaticClosure":{"Closure":[],"Function":[]},"BoundClosure":{"Closure":[],"Function":[]},"RuntimeError":{"Error":[]},"JsLinkedHashMap":{"MapBase":["1","2"],"LinkedHashMap":["1","2"],"Map":["1","2"],"MapBase.K":"1","MapBase.V":"2"},"LinkedHashMapKeysIterable":{"EfficientLengthIterable":["1"],"Iterable":["1"],"Iterable.E":"1"},"LinkedHashMapKeyIterator":{"Iterator":["1"]},"LinkedHashMapValuesIterable":{"EfficientLengthIterable":["1"],"Iterable":["1"],"Iterable.E":"1"},"LinkedHashMapValueIterator":{"Iterator":["1"]},"LinkedHashMapEntriesIterable":{"EfficientLengthIterable":["MapEntry<1,2>"],"Iterable":["MapEntry<1,2>"],"Iterable.E":"MapEntry<1,2>"},"LinkedHashMapEntryIterator":{"Iterator":["MapEntry<1,2>"]},"_Record2":{"_Record":[]},"JSSyntaxRegExp":{"RegExp":[],"Pattern":[]},"_MatchImplementation":{"RegExpMatch":[],"Match":[]},"_AllMatchesIterable":{"Iterable":["RegExpMatch"],"Iterable.E":"RegExpMatch"},"_AllMatchesIterator":{"Iterator":["RegExpMatch"]},"StringMatch":{"Match":[]},"_StringAllMatchesIterable":{"Iterable":["Match"],"Iterable.E":"Match"},"_StringAllMatchesIterator":{"Iterator":["Match"]},"NativeArrayBuffer":{"NativeByteBuffer":[],"JSObject":[],"ByteBuffer":[],"TrustedGetRuntimeType":[]},"NativeByteData":{"ByteData":[],"JSObject":[],"TrustedGetRuntimeType":[]},"NativeInt32List":{"NativeTypedArrayOfInt":[],"Int32List":[],"ListBase":["int"],"TypedDataList":["int"],"NativeTypedArray":["int"],"List":["int"],"JavaScriptIndexingBehavior":["int"],"EfficientLengthIterable":["int"],"JSObject":[],"JSIndexable":["int"],"Iterable":["int"],"FixedLengthListMixin":["int"],"TrustedGetRuntimeType":[],"ListBase.E":"int"},"NativeUint8List":{"NativeTypedArrayOfInt":[],"Uint8List":[],"ListBase":["int"],"TypedDataList":["int"],"NativeTypedArray":["int"],"List":["int"],"JavaScriptIndexingBehavior":["int"],"EfficientLengthIterable":["int"],"JSObject":[],"JSIndexable":["int"],"Iterable":["int"],"FixedLengthListMixin":["int"],"TrustedGetRuntimeType":[],"ListBase.E":"int"},"NativeByteBuffer":{"JSObject":[],"ByteBuffer":[],"TrustedGetRuntimeType":[]},"NativeTypedData":{"JSObject":[]},"_UnmodifiableNativeByteBufferView":{"ByteBuffer":[]},"NativeTypedArray":{"JavaScriptIndexingBehavior":["1"],"JSObject":[],"JSIndexable":["1"]},"NativeTypedArrayOfDouble":{"ListBase":["double"],"NativeTypedArray":["double"],"List":["double"],"JavaScriptIndexingBehavior":["double"],"EfficientLengthIterable":["double"],"JSObject":[],"JSIndexable":["double"],"Iterable":["double"],"FixedLengthListMixin":["double"]},"NativeTypedArrayOfInt":{"ListBase":["int"],"NativeTypedArray":["int"],"List":["int"],"JavaScriptIndexingBehavior":["int"],"EfficientLengthIterable":["int"],"JSObject":[],"JSIndexable":["int"],"Iterable":["int"],"FixedLengthListMixin":["int"]},"NativeFloat32List":{"NativeTypedArrayOfDouble":[],"Float32List":[],"ListBase":["double"],"TypedDataList":["double"],"NativeTypedArray":["double"],"List":["double"],"JavaScriptIndexingBehavior":["double"],"EfficientLengthIterable":["double"],"JSObject":[],"JSIndexable":["double"],"Iterable":["double"],"FixedLengthListMixin":["double"],"TrustedGetRuntimeType":[],"ListBase.E":"double"},"NativeFloat64List":{"NativeTypedArrayOfDouble":[],"Float64List":[],"ListBase":["double"],"TypedDataList":["double"],"NativeTypedArray":["double"],"List":["double"],"JavaScriptIndexingBehavior":["double"],"EfficientLengthIterable":["double"],"JSObject":[],"JSIndexable":["double"],"Iterable":["double"],"FixedLengthListMixin":["double"],"TrustedGetRuntimeType":[],"ListBase.E":"double"},"NativeInt16List":{"NativeTypedArrayOfInt":[],"Int16List":[],"ListBase":["int"],"TypedDataList":["int"],"NativeTypedArray":["int"],"List":["int"],"JavaScriptIndexingBehavior":["int"],"EfficientLengthIterable":["int"],"JSObject":[],"JSIndexable":["int"],"Iterable":["int"],"FixedLengthListMixin":["int"],"TrustedGetRuntimeType":[],"ListBase.E":"int"},"NativeInt8List":{"NativeTypedArrayOfInt":[],"Int8List":[],"ListBase":["int"],"TypedDataList":["int"],"NativeTypedArray":["int"],"List":["int"],"JavaScriptIndexingBehavior":["int"],"EfficientLengthIterable":["int"],"JSObject":[],"JSIndexable":["int"],"Iterable":["int"],"FixedLengthListMixin":["int"],"TrustedGetRuntimeType":[],"ListBase.E":"int"},"NativeUint16List":{"NativeTypedArrayOfInt":[],"Uint16List":[],"ListBase":["int"],"TypedDataList":["int"],"NativeTypedArray":["int"],"List":["int"],"JavaScriptIndexingBehavior":["int"],"EfficientLengthIterable":["int"],"JSObject":[],"JSIndexable":["int"],"Iterable":["int"],"FixedLengthListMixin":["int"],"TrustedGetRuntimeType":[],"ListBase.E":"int"},"NativeUint32List":{"NativeTypedArrayOfInt":[],"Uint32List":[],"ListBase":["int"],"TypedDataList":["int"],"NativeTypedArray":["int"],"List":["int"],"JavaScriptIndexingBehavior":["int"],"EfficientLengthIterable":["int"],"JSObject":[],"JSIndexable":["int"],"Iterable":["int"],"FixedLengthListMixin":["int"],"TrustedGetRuntimeType":[],"ListBase.E":"int"},"NativeUint8ClampedList":{"NativeTypedArrayOfInt":[],"Uint8ClampedList":[],"ListBase":["int"],"TypedDataList":["int"],"NativeTypedArray":["int"],"List":["int"],"JavaScriptIndexingBehavior":["int"],"EfficientLengthIterable":["int"],"JSObject":[],"JSIndexable":["int"],"Iterable":["int"],"FixedLengthListMixin":["int"],"TrustedGetRuntimeType":[],"ListBase.E":"int"},"_Error":{"Error":[]},"_TypeError":{"TypeError":[],"Error":[]},"AsyncError":{"Error":[]},"_BufferingStreamSubscription":{"StreamSubscription":["1"],"_EventSink":["1"],"_EventDispatch":["1"],"_BufferingStreamSubscription.T":"1"},"_HandlerEventSink":{"EventSink":["1"]},"_TimerImpl":{"Timer":[]},"_AsyncAwaitCompleter":{"Completer":["1"]},"_SyncStarIterator":{"Iterator":["1"]},"_SyncStarIterable":{"Iterable":["1"],"Iterable.E":"1"},"_BroadcastStream":{"_ControllerStream":["1"],"_StreamImpl":["1"],"Stream":["1"],"Stream.T":"1"},"_BroadcastSubscription":{"_ControllerSubscription":["1"],"_BufferingStreamSubscription":["1"],"StreamSubscription":["1"],"_EventSink":["1"],"_EventDispatch":["1"],"_BufferingStreamSubscription.T":"1"},"_BroadcastStreamController":{"StreamController":["1"],"StreamSink":["1"],"EventSink":["1"],"_StreamControllerLifecycle":["1"],"_EventSink":["1"],"_EventDispatch":["1"]},"_SyncBroadcastStreamController":{"_BroadcastStreamController":["1"],"StreamController":["1"],"StreamSink":["1"],"EventSink":["1"],"_StreamControllerLifecycle":["1"],"_EventSink":["1"],"_EventDispatch":["1"]},"ParallelWaitError":{"Error":[]},"_Completer":{"Completer":["1"]},"_AsyncCompleter":{"_Completer":["1"],"Completer":["1"]},"_SyncCompleter":{"_Completer":["1"],"Completer":["1"]},"_Future":{"Future":["1"]},"StreamTransformerBase":{"StreamTransformer":["1","2"]},"_StreamController":{"StreamController":["1"],"StreamSink":["1"],"EventSink":["1"],"_StreamControllerLifecycle":["1"],"_EventSink":["1"],"_EventDispatch":["1"]},"_AsyncStreamController":{"_AsyncStreamControllerDispatch":["1"],"_StreamController":["1"],"StreamController":["1"],"StreamSink":["1"],"EventSink":["1"],"_StreamControllerLifecycle":["1"],"_EventSink":["1"],"_EventDispatch":["1"]},"_SyncStreamController":{"_SyncStreamControllerDispatch":["1"],"_StreamController":["1"],"StreamController":["1"],"StreamSink":["1"],"EventSink":["1"],"_StreamControllerLifecycle":["1"],"_EventSink":["1"],"_EventDispatch":["1"]},"_ControllerStream":{"_StreamImpl":["1"],"Stream":["1"],"Stream.T":"1"},"_ControllerSubscription":{"_BufferingStreamSubscription":["1"],"StreamSubscription":["1"],"_EventSink":["1"],"_EventDispatch":["1"],"_BufferingStreamSubscription.T":"1"},"_StreamSinkWrapper":{"StreamSink":["1"],"EventSink":["1"]},"_StreamImpl":{"Stream":["1"]},"_DelayedData":{"_DelayedEvent":["1"]},"_DelayedError":{"_DelayedEvent":["@"]},"_DelayedDone":{"_DelayedEvent":["@"]},"_DoneStreamSubscription":{"StreamSubscription":["1"]},"_ForwardingStream":{"Stream":["2"]},"_ForwardingStreamSubscription":{"_BufferingStreamSubscription":["2"],"StreamSubscription":["2"],"_EventSink":["2"],"_EventDispatch":["2"],"_BufferingStreamSubscription.T":"2"},"_MapStream":{"_ForwardingStream":["1","2"],"Stream":["2"],"Stream.T":"2"},"_EventSinkWrapper":{"EventSink":["1"]},"_SinkTransformerStreamSubscription":{"_BufferingStreamSubscription":["2"],"StreamSubscription":["2"],"_EventSink":["2"],"_EventDispatch":["2"],"_BufferingStreamSubscription.T":"2"},"_StreamSinkTransformer":{"StreamTransformer":["1","2"]},"_BoundSinkStream":{"Stream":["2"],"Stream.T":"2"},"_StreamHandlerTransformer":{"_StreamSinkTransformer":["1","2"],"StreamTransformer":["1","2"]},"_ZoneSpecification":{"ZoneSpecification":[]},"_ZoneDelegate":{"ZoneDelegate":[]},"_Zone":{"Zone":[]},"_CustomZone":{"_Zone":[],"Zone":[]},"_RootZone":{"_Zone":[],"Zone":[]},"_HashMap":{"MapBase":["1","2"],"Map":["1","2"],"MapBase.K":"1","MapBase.V":"2"},"_IdentityHashMap":{"_HashMap":["1","2"],"MapBase":["1","2"],"Map":["1","2"],"MapBase.K":"1","MapBase.V":"2"},"_HashMapKeyIterable":{"EfficientLengthIterable":["1"],"Iterable":["1"],"Iterable.E":"1"},"_HashMapKeyIterator":{"Iterator":["1"]},"_LinkedHashSet":{"_SetBase":["1"],"SetBase":["1"],"Set":["1"],"EfficientLengthIterable":["1"],"Iterable":["1"]},"_LinkedHashSetIterator":{"Iterator":["1"]},"LinkedList":{"Iterable":["1"],"Iterable.E":"1"},"_LinkedListIterator":{"Iterator":["1"]},"ListBase":{"List":["1"],"EfficientLengthIterable":["1"],"Iterable":["1"]},"MapBase":{"Map":["1","2"]},"_MapBaseValueIterable":{"EfficientLengthIterable":["2"],"Iterable":["2"],"Iterable.E":"2"},"_MapBaseValueIterator":{"Iterator":["2"]},"SetBase":{"Set":["1"],"EfficientLengthIterable":["1"],"Iterable":["1"]},"_SetBase":{"SetBase":["1"],"Set":["1"],"EfficientLengthIterable":["1"],"Iterable":["1"]},"AsciiCodec":{"Codec":["String","List<int>"]},"_UnicodeSubsetEncoder":{"Converter":["String","List<int>"],"StreamTransformer":["String","List<int>"]},"AsciiEncoder":{"Converter":["String","List<int>"],"StreamTransformer":["String","List<int>"]},"Base64Codec":{"Codec":["List<int>","String"]},"Base64Encoder":{"Converter":["List<int>","String"],"StreamTransformer":["List<int>","String"]},"_FusedCodec":{"Codec":["1","3"]},"Converter":{"StreamTransformer":["1","2"]},"Encoding":{"Codec":["String","List<int>"]},"Utf8Codec":{"Codec":["String","List<int>"]},"Utf8Encoder":{"Converter":["String","List<int>"],"StreamTransformer":["String","List<int>"]},"BigInt":{"Comparable":["BigInt"]},"DateTime":{"Comparable":["DateTime"]},"double":{"num":[],"Comparable":["num"]},"Duration":{"Comparable":["Duration"]},"int":{"num":[],"Comparable":["num"]},"List":{"EfficientLengthIterable":["1"],"Iterable":["1"]},"num":{"Comparable":["num"]},"RegExpMatch":{"Match":[]},"String":{"Comparable":["String"],"Pattern":[]},"_BigIntImpl":{"BigInt":[],"Comparable":["BigInt"]},"_FinalizationRegistryWrapper":{"Finalizer":["1"]},"_Enum":{"Enum":[]},"AssertionError":{"Error":[]},"TypeError":{"Error":[]},"ArgumentError":{"Error":[]},"RangeError":{"Error":[]},"IndexError":{"Error":[]},"UnsupportedError":{"Error":[]},"UnimplementedError":{"Error":[]},"StateError":{"Error":[]},"ConcurrentModificationError":{"Error":[]},"OutOfMemoryError":{"Error":[]},"StackOverflowError":{"Error":[]},"_Exception":{"Exception":[]},"FormatException":{"Exception":[]},"IntegerDivisionByZeroException":{"Exception":[],"Error":[]},"_StringStackTrace":{"StackTrace":[]},"StringBuffer":{"StringSink":[]},"_Uri":{"Uri":[]},"_SimpleUri":{"Uri":[]},"_DataUri":{"Uri":[]},"NullRejectionException":{"Exception":[]},"_JSSecureRandom":{"Random":[]},"DelegatingStreamSink":{"StreamSink":["1"],"EventSink":["1"]},"ConnectionClosedException":{"Exception":[]},"DriftRemoteException":{"Exception":[]},"Request":{"Message":[]},"SuccessResponse":{"Message":[]},"StatementMethod":{"Enum":[]},"ExecuteBatchedStatement":{"RequestPayload":[]},"NestedExecutorControl":{"Enum":[]},"NotifyTablesUpdated":{"RequestPayload":[]},"PrimitiveResponsePayload":{"ResponsePayload":[]},"ErrorResponse":{"Message":[]},"CancelledResponse":{"Message":[]},"NoArgsRequest":{"Enum":[],"RequestPayload":[]},"ExecuteQuery":{"RequestPayload":[]},"RequestCancellation":{"RequestPayload":[]},"RunNestedExecutorControl":{"RequestPayload":[]},"EnsureOpen":{"RequestPayload":[]},"ServerInfo":{"RequestPayload":[]},"RunBeforeOpen":{"RequestPayload":[]},"SelectResult":{"ResponsePayload":[]},"ServerImplementation":{"DriftServer":[]},"_ServerDbUser":{"QueryExecutorUser":[]},"UpdateKind":{"Enum":[]},"CancellationException":{"Exception":[]},"NoVersionDelegate":{"DbVersionDelegate":[]},"DynamicVersionDelegate":{"DbVersionDelegate":[]},"_BaseExecutor":{"QueryExecutor":[]},"_TransactionExecutor":{"_BaseExecutor":[],"TransactionExecutor":[],"QueryExecutor":[]},"_StatementBasedTransactionExecutor":{"_BaseExecutor":[],"TransactionExecutor":[],"QueryExecutor":[]},"DelegatedDatabase":{"_BaseExecutor":[],"QueryExecutor":[]},"_BeforeOpeningExecutor":{"_BaseExecutor":[],"QueryExecutor":[]},"_ExclusiveExecutor":{"_BaseExecutor":[],"QueryExecutor":[]},"_InterceptedExecutor":{"QueryExecutor":[]},"_InterceptedTransactionExecutor":{"TransactionExecutor":[],"QueryExecutor":[]},"SqlDialect":{"Enum":[]},"Sqlite3Delegate":{"DatabaseDelegate":[]},"_SqliteVersionDelegate":{"DbVersionDelegate":[]},"LazyDatabase":{"QueryExecutor":[]},"SharedWorkerCompatibilityResult":{"WasmInitializationMessage":[]},"ProtocolVersion":{"Enum":[]},"CompatibilityResult":{"WasmInitializationMessage":[]},"WorkerError":{"WasmInitializationMessage":[],"Exception":[]},"ServeDriftDatabase":{"WasmInitializationMessage":[]},"RequestCompatibilityCheck":{"WasmInitializationMessage":[]},"DedicatedWorkerCompatibilityResult":{"WasmInitializationMessage":[]},"StartFileSystemServer":{"WasmInitializationMessage":[]},"DeleteDatabase":{"WasmInitializationMessage":[]},"_CloseVfsOnClose":{"QueryInterceptor":[]},"WasmStorageImplementation":{"Enum":[]},"WebStorageApi":{"Enum":[]},"WasmDatabase":{"DelegatedDatabase":[],"_BaseExecutor":[],"QueryExecutor":[]},"_WasmDelegate":{"Sqlite3Delegate":["CommonDatabase"],"DatabaseDelegate":[],"Sqlite3Delegate.0":"CommonDatabase"},"PathException":{"Exception":[]},"PosixStyle":{"InternalStyle":[]},"UrlStyle":{"InternalStyle":[]},"WindowsStyle":{"InternalStyle":[]},"SqliteException":{"Exception":[]},"SqliteArguments":{"List":["Object?"],"EfficientLengthIterable":["Object?"],"Iterable":["Object?"]},"DatabaseImplementation":{"CommonDatabase":[]},"ValueList":{"ListBase":["Object?"],"List":["Object?"],"EfficientLengthIterable":["Object?"],"Iterable":["Object?"],"ListBase.E":"Object?"},"Sqlite3Implementation":{"CommonSqlite3":[]},"StatementImplementation":{"CommonPreparedStatement":[]},"InMemoryFileSystem":{"VirtualFileSystem":[]},"_InMemoryFile":{"VirtualFileSystemFileV1":[],"VirtualFileSystemFile":[]},"Row":{"UnmodifiableMapMixin":["String","@"],"MapBase":["String","@"],"Map":["String","@"],"MapBase.K":"String","MapBase.V":"@"},"ResultSet":{"ListBase":["Row"],"NonGrowableListMixin":["Row"],"List":["Row"],"EfficientLengthIterable":["Row"],"Cursor":[],"Iterable":["Row"],"ListBase.E":"Row"},"_ResultIterator":{"Iterator":["Row"]},"OpenMode":{"Enum":[]},"IndexedParameters":{"StatementParameters":[]},"VfsException":{"Exception":[]},"BaseVirtualFileSystem":{"VirtualFileSystem":[]},"BaseVfsFile":{"VirtualFileSystemFileV1":[],"VirtualFileSystemFile":[]},"_AsyncCallbackEntry0":{"LinkedListEntry":["_AsyncCallbackEntry0"],"LinkedListEntry.E":"_AsyncCallbackEntry0"},"WasmValue":{"RawSqliteValue":[]},"WasmSqliteBindings":{"RawSqliteBindings":[]},"WasmDatabase0":{"RawSqliteDatabase":[]},"WasmStatement":{"RawSqliteStatement":[]},"WasmContext":{"RawSqliteContext":[]},"WasmValueList":{"ListBase":["WasmValue"],"List":["WasmValue"],"EfficientLengthIterable":["WasmValue"],"Iterable":["WasmValue"],"ListBase.E":"WasmValue"},"AsyncJavaScriptIteratable":{"Stream":["1"],"Stream.T":"1"},"WasmSqlite3":{"CommonSqlite3":[]},"WasmVfs":{"VirtualFileSystem":[]},"WasmFile":{"VirtualFileSystemFileV1":[],"VirtualFileSystemFile":[]},"WorkerOperation":{"Enum":[]},"EmptyMessage":{"Message0":[]},"Flags":{"Message0":[]},"NameAndInt32Flags":{"Flags":[],"Message0":[]},"IndexedDbFileSystem":{"VirtualFileSystem":[]},"_IndexedDbWorkItem":{"LinkedListEntry":["_IndexedDbWorkItem"]},"_IndexedDbFile":{"VirtualFileSystemFileV1":[],"VirtualFileSystemFile":[]},"_FunctionWorkItem":{"_IndexedDbWorkItem":[],"LinkedListEntry":["_IndexedDbWorkItem"],"LinkedListEntry.E":"_IndexedDbWorkItem"},"_DeleteFileWorkItem":{"_IndexedDbWorkItem":[],"LinkedListEntry":["_IndexedDbWorkItem"],"LinkedListEntry.E":"_IndexedDbWorkItem"},"_CreateFileWorkItem":{"_IndexedDbWorkItem":[],"LinkedListEntry":["_IndexedDbWorkItem"],"LinkedListEntry.E":"_IndexedDbWorkItem"},"_WriteFileWorkItem":{"_IndexedDbWorkItem":[],"LinkedListEntry":["_IndexedDbWorkItem"],"LinkedListEntry.E":"_IndexedDbWorkItem"},"FileType":{"Enum":[]},"SimpleOpfsFileSystem":{"VirtualFileSystem":[]},"_SimpleOpfsFile":{"VirtualFileSystemFileV1":[],"VirtualFileSystemFile":[]},"Chain":{"StackTrace":[]},"LazyTrace":{"Trace":[],"StackTrace":[]},"Trace":{"StackTrace":[]},"UnparsedFrame":{"Frame":[]},"CloseGuaranteeChannel":{"StreamChannelMixin":["1"],"StreamChannel":["1"]},"_CloseGuaranteeStream":{"Stream":["1"],"Stream.T":"1"},"_CloseGuaranteeSink":{"DelegatingStreamSink":["1"],"StreamSink":["1"],"EventSink":["1"]},"GuaranteeChannel":{"StreamChannelMixin":["1"],"StreamChannel":["1"]},"_GuaranteeSink":{"StreamSink":["1"],"EventSink":["1"]},"StreamChannelMixin":{"StreamChannel":["1"]},"Uint8Buffer":{"TypedDataBuffer":["int"],"ListBase":["int"],"List":["int"],"EfficientLengthIterable":["int"],"Iterable":["int"],"ListBase.E":"int","TypedDataBuffer.E":"int"},"TypedDataBuffer":{"ListBase":["1"],"List":["1"],"EfficientLengthIterable":["1"],"Iterable":["1"]},"_IntBuffer":{"TypedDataBuffer":["int"],"ListBase":["int"],"List":["int"],"EfficientLengthIterable":["int"],"Iterable":["int"]},"_EventStream":{"Stream":["1"],"Stream.T":"1"},"_EventStreamSubscription":{"StreamSubscription":["1"]},"Int8List":{"TypedDataList":["int"],"List":["int"],"EfficientLengthIterable":["int"],"Iterable":["int"]},"Uint8List":{"TypedDataList":["int"],"List":["int"],"EfficientLengthIterable":["int"],"Iterable":["int"]},"Uint8ClampedList":{"TypedDataList":["int"],"List":["int"],"EfficientLengthIterable":["int"],"Iterable":["int"]},"Int16List":{"TypedDataList":["int"],"List":["int"],"EfficientLengthIterable":["int"],"Iterable":["int"]},"Uint16List":{"TypedDataList":["int"],"List":["int"],"EfficientLengthIterable":["int"],"Iterable":["int"]},"Int32List":{"TypedDataList":["int"],"List":["int"],"EfficientLengthIterable":["int"],"Iterable":["int"]},"Uint32List":{"TypedDataList":["int"],"List":["int"],"EfficientLengthIterable":["int"],"Iterable":["int"]},"Float32List":{"TypedDataList":["double"],"List":["double"],"EfficientLengthIterable":["double"],"Iterable":["double"]},"Float64List":{"TypedDataList":["double"],"List":["double"],"EfficientLengthIterable":["double"],"Iterable":["double"]}}'));
   A._Universe_addErasedTypes(init.typeUniverse, JSON.parse('{"UnmodifiableListBase":1,"__CastListBase__CastIterableBase_ListMixin":2,"NativeTypedArray":1,"StreamTransformerBase":2,"_DelayedEvent":1,"AggregateContext":1}'));
   var string$ = {
     x00_____: "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\u03f6\x00\u0404\u03f4 \u03f4\u03f6\u01f6\u01f6\u03f6\u03fc\u01f4\u03ff\u03ff\u0584\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u05d4\u01f4\x00\u01f4\x00\u0504\u05c4\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u0400\x00\u0400\u0200\u03f7\u0200\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u03ff\u0200\u0200\u0200\u03f7\x00",
@@ -28356,9 +28824,11 @@
       Frame_Function_String: findType("Frame(String)"),
       Function: findType("Function"),
       FutureOr_nullable_ResponsePayload_Function_Request: findType("ResponsePayload?/(Request)"),
+      Future_Null: findType("Future<Null>"),
       Future_bool: findType("Future<bool>"),
       Future_nullable_ResponsePayload: findType("Future<ResponsePayload?>"),
       Future_nullable_Uint8List: findType("Future<Uint8List?>"),
+      Future_void_Function__IndexedDbTransaction: findType("Future<~>(_IndexedDbTransaction)"),
       IndexedDbFileSystem: findType("IndexedDbFileSystem"),
       Int16List: findType("Int16List"),
       Int32List: findType("Int32List"),
@@ -28386,6 +28856,7 @@
       JSArray_double: findType("JSArray<double>"),
       JSArray_dynamic: findType("JSArray<@>"),
       JSArray_int: findType("JSArray<int>"),
+      JSArray_nullable_AsyncError: findType("JSArray<AsyncError?>"),
       JSArray_nullable_Object: findType("JSArray<Object?>"),
       JSArray_nullable_String: findType("JSArray<String?>"),
       JSArray_nullable_double: findType("JSArray<double?>"),
@@ -28398,13 +28869,16 @@
       JavaScriptFunction: findType("JavaScriptFunction"),
       JavaScriptIndexingBehavior_dynamic: findType("JavaScriptIndexingBehavior<@>"),
       JavaScriptSymbol: findType("JavaScriptSymbol"),
+      LinkedList__AsyncCallbackEntry: findType("LinkedList<_AsyncCallbackEntry0>"),
       LinkedList__IndexedDbWorkItem: findType("LinkedList<_IndexedDbWorkItem>"),
+      List_Future_void: findType("List<Future<~>>"),
       List_JSArray_nullable_Object: findType("List<JSArray<Object?>>"),
       List_JSObject: findType("List<JSObject>"),
       List_Map_of_String_and_nullable_Object: findType("List<Map<String,Object?>>"),
       List_RawSqliteValue: findType("List<RawSqliteValue>"),
       List_Record_2_WebStorageApi_and_String: findType("List<+(WebStorageApi,String)>"),
       List_String: findType("List<String>"),
+      List__IndexedDbWorkItem: findType("List<_IndexedDbWorkItem>"),
       List_dynamic: findType("List<@>"),
       List_int: findType("List<int>"),
       List_nullable_Object: findType("List<Object?>"),
@@ -28464,6 +28938,7 @@
       VfsWorker: findType("VfsWorker"),
       VirtualFileSystem: findType("VirtualFileSystem"),
       VirtualFileSystemFile: findType("VirtualFileSystemFile"),
+      VirtualFileSystemFileV1: findType("VirtualFileSystemFileV1"),
       WasmSqlite3: findType("WasmSqlite3"),
       WasmStorageImplementation: findType("WasmStorageImplementation"),
       WasmValue: findType("WasmValue"),
@@ -28489,6 +28964,7 @@
       _Future_nullable_Uint8List: findType("_Future<Uint8List?>"),
       _Future_void: findType("_Future<~>"),
       _IdentityHashMap_of_nullable_Object_and_nullable_Object: findType("_IdentityHashMap<Object?,Object?>"),
+      _IndexedDbTransaction: findType("_IndexedDbTransaction"),
       _OpenedFileHandle: findType("_OpenedFileHandle"),
       _PendingRequest: findType("_PendingRequest"),
       _ResolvedPath: findType("_ResolvedPath"),
@@ -28498,6 +28974,7 @@
       _SyncCompleter_JSObject: findType("_SyncCompleter<JSObject>"),
       _SyncCompleter_bool: findType("_SyncCompleter<bool>"),
       _SyncCompleter_void: findType("_SyncCompleter<~>"),
+      _ZoneFunction_of_void_Function_4_Zone_and_ZoneDelegate_and_Zone_and_void_Function: findType("_ZoneFunction<~(Zone,ZoneDelegate,Zone,~())>"),
       _ZoneFunction_of_void_Function_Zone_ZoneDelegate_Zone_Object_StackTrace: findType("_ZoneFunction<~(Zone,ZoneDelegate,Zone,Object,StackTrace)>"),
       bool: findType("bool"),
       bool_Function_Object: findType("bool(Object)"),
@@ -28546,6 +29023,7 @@
       void_Function_Object: findType("~(Object)"),
       void_Function_Object_StackTrace: findType("~(Object,StackTrace)"),
       void_Function_Timer: findType("~(Timer)"),
+      void_Function_int: findType("~(int)"),
       void_Function_int_String_int: findType("~(int,String,int)")
     };
   })();
@@ -28814,7 +29292,7 @@
     B._ZoneFunction__RootZone__rootRun = new A._ZoneFunction(B.C__RootZone, A.async___rootRun$closure(), A.findType("_ZoneFunction<0^(Zone,ZoneDelegate,Zone,0^())<Object?>>"));
     B._ZoneFunction__RootZone__rootRunBinary = new A._ZoneFunction(B.C__RootZone, A.async___rootRunBinary$closure(), A.findType("_ZoneFunction<0^(Zone,ZoneDelegate,Zone,0^(1^,2^),1^,2^)<Object?,Object?,Object?>>"));
     B._ZoneFunction__RootZone__rootRunUnary = new A._ZoneFunction(B.C__RootZone, A.async___rootRunUnary$closure(), A.findType("_ZoneFunction<0^(Zone,ZoneDelegate,Zone,0^(1^),1^)<Object?,Object?>>"));
-    B._ZoneFunction__RootZone__rootScheduleMicrotask = new A._ZoneFunction(B.C__RootZone, A.async___rootScheduleMicrotask$closure(), A.findType("_ZoneFunction<~(Zone,ZoneDelegate,Zone,~())>"));
+    B._ZoneFunction__RootZone__rootScheduleMicrotask = new A._ZoneFunction(B.C__RootZone, A.async___rootScheduleMicrotask$closure(), type$._ZoneFunction_of_void_Function_4_Zone_and_ZoneDelegate_and_Zone_and_void_Function);
     B._ZoneFunction_e9o = new A._ZoneFunction(B.C__RootZone, A.async___rootRegisterBinaryCallback$closure(), A.findType("_ZoneFunction<0^(1^,2^)(Zone,ZoneDelegate,Zone,0^(1^,2^))<Object?,Object?,Object?>>"));
     B._ZoneSpecification_Ipa = new A._ZoneSpecification(null, null, null, null, null, null, null, null, null, null, null, null, null);
   })();
@@ -28941,7 +29419,7 @@
     });
     _lazyFinal($, "BaseVirtualFileSystem__fallbackRandom", "$get$BaseVirtualFileSystem__fallbackRandom", () => $.$get$Random__secureRandom());
     _lazyFinal($, "WasmSqliteBindings__sqliteVfsPointer", "$get$WasmSqliteBindings__sqliteVfsPointer", () => new A.Expando(new WeakMap(), A.findType("Expando<int>")));
-    _lazyFinal($, "AsynchronousIndexedDbFileSystem__storesJs", "$get$AsynchronousIndexedDbFileSystem__storesJs", () => A.ListToJSArray_get_toJS(A._setArrayType(["files", "blocks"], type$.JSArray_String), type$.String));
+    _lazyFinal($, "_storesJs", "$get$_storesJs", () => A.ListToJSArray_get_toJS(A._setArrayType(["files", "blocks"], type$.JSArray_String), type$.String));
     _lazyFinal($, "FileType_byName", "$get$FileType_byName", () => {
       var _i, entry,
         t1 = A.LinkedHashMap_LinkedHashMap$_empty(type$.String, A.findType("FileType"));

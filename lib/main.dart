@@ -1,52 +1,56 @@
-// lib/main.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart'; 
+import 'firebase_options.dart';
 
-import 'controllers/chat_controller.dart';
+import 'controllers/chat/chat_controller.dart';
+import 'controllers/currency_controller.dart';
+import 'controllers/ledger/ledger_controller.dart';
 import 'constants/api_constants.dart';
-import 'screens/product_list_screen.dart';
 import 'screens/login_screen.dart';
+import 'controllers/auth_controller.dart';
 import 'main_screen.dart';
 import 'services/storage_service.dart';
-import 'controllers/auth_controller.dart';
 import 'services/notification_service.dart';
-import 'services/fcm_service.dart'; 
+import 'services/fcm_service.dart';
 import 'services/connectivity_service.dart';
 import 'services/chat_service.dart';
 import 'services/sync/chat_sync_service.dart';
-import 'services/order_sync_service.dart'; 
-import 'core/local/db/app_database.dart'; 
+import 'services/order_sync_service.dart';
+import 'core/local/db/app_database.dart';
+import 'screens/product_list_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    // نکته: هندلر بک‌گراند در داخل FCMService.init ثبت می‌شود
-  } catch (e) {
-    debugPrint("Firebase init error: $e");
+  if (!kIsWeb) {
+    try {
+      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    } catch (e) {
+      debugPrint("Firebase init error: $e");
+    }
   }
 
   await AppDatabase.initializeLocalDatabases();
 
-  await NotificationService.init();
-  await NotificationService.requestPermission();
-  
-  await FCMService.init(); 
+  if (!kIsWeb) {
+    await NotificationService.init();
+    await NotificationService.requestPermission();
+    await FCMService.init();
+  }
 
   await Get.putAsync(() => StorageService().init());
-  
+
   Get.put(ChatService());
   Get.put(ConnectivityService(), permanent: true);
   Get.put(ChatSyncService(), permanent: true);
-  Get.put(OrderSyncService(), permanent: true); 
+  Get.put(OrderSyncService(), permanent: true);
+  Get.put(CurrencyController(), permanent: true);
 
   Get.put(AuthController());
   Get.put(ChatController(), permanent: true);
+  Get.put(LedgerController(), permanent: true);
 
   runApp(const MyApp());
 }
@@ -65,13 +69,13 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E3A8A)),
         useMaterial3: true,
-        fontFamily: 'Tahoma', 
+        fontFamily: 'Tahoma',
       ),
-      initialRoute: initialRoute, 
+      initialRoute: initialRoute,
       getPages: [
         GetPage(name: '/login', page: () => LoginScreen()),
         GetPage(name: '/products', page: () => ProductListScreen()),
-        GetPage(name: '/main', page: () => const MainScreen()), 
+        GetPage(name: '/main', page: () => MainScreen()),
       ],
     );
   }

@@ -1,36 +1,23 @@
-import 'package:hive/hive.dart';
+// D:\accounting_Arya\mobile_app\customer_app\lib\models\local\chat_message_local.dart
+import 'package:hive_ce/hive_ce.dart';
 
-part 'chat_message_local.g.dart'; // این فایل توسط build_runner تولید می‌شود
+part 'chat_message_local.g.dart'; 
 
 @HiveType(typeId: 0)
 class ChatMessageLocal extends HiveObject {
-  @HiveField(0)
-  int? localId;
-
-  @HiveField(1)
-  String? serverId;
-
-  @HiveField(2)
-  String conversationId;
-
-  @HiveField(3)
-  String senderType;
-
-  @HiveField(4)
-  String content;
-
-  @HiveField(5)
-  String createdAt;
-
-  @HiveField(6)
-  bool isSynced;
-
-  @HiveField(7)
-  bool isRead;
-
-  // تغییر مهم: فیلد جدید برای شناسه یکتای سمت کلاینت اضافه شد
-  @HiveField(8)
-  String? clientTempId;
+  @HiveField(0) int? localId;
+  @HiveField(1) String? serverId;
+  @HiveField(2) String conversationId;
+  @HiveField(3) String senderType;
+  @HiveField(4) String content;
+  @HiveField(5) String createdAt;
+  @HiveField(6) bool isSynced;
+  @HiveField(7) bool isRead;
+  @HiveField(8) String? clientTempId;
+  // --- فیلدهای جدید ---
+  @HiveField(9) String messageType; // 'text' یا 'image'
+  @HiveField(10) String? fileUrl;
+  @HiveField(11) int? replyToId;
 
   ChatMessageLocal({
     this.localId,
@@ -41,21 +28,16 @@ class ChatMessageLocal extends HiveObject {
     required this.createdAt,
     this.isSynced = false,
     this.isRead = false,
-    // تغییر مهم: فیلد جدید به کانستراکتور اضافه شد
     this.clientTempId,
+    this.messageType = 'text',
+    this.fileUrl,
+    this.replyToId,
   });
 
   ChatMessageLocal copyWith({
-    int? localId,
-    String? serverId,
-    String? conversationId,
-    String? senderType,
-    String? content,
-    String? createdAt,
-    bool? isSynced,
-    bool? isRead,
-    // تغییر مهم: فیلد جدید به متد copyWith اضافه شد
-    String? clientTempId,
+    int? localId, String? serverId, String? conversationId, String? senderType,
+    String? content, String? createdAt, bool? isSynced, bool? isRead,
+    String? clientTempId, String? messageType, String? fileUrl, int? replyToId,
   }) {
     return ChatMessageLocal(
       localId: localId ?? this.localId,
@@ -66,8 +48,10 @@ class ChatMessageLocal extends HiveObject {
       createdAt: createdAt ?? this.createdAt,
       isSynced: isSynced ?? this.isSynced,
       isRead: isRead ?? this.isRead,
-      // تغییر مهم: فیلد جدید به مقدار بازگشتی اضافه شد
       clientTempId: clientTempId ?? this.clientTempId,
+      messageType: messageType ?? this.messageType,
+      fileUrl: fileUrl ?? this.fileUrl,
+      replyToId: replyToId ?? this.replyToId,
     );
   }
 }

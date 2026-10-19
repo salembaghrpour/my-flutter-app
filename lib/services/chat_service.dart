@@ -24,13 +24,17 @@ class ChatService {
       if (response.statusCode == 200) {
         List data = jsonDecode(utf8.decode(response.bodyBytes));
         return data.map((msg) => {
-          "id": msg['id'], // نام فیلد را به id تغییر می‌دهیم تا با بقیه جاها یکسان باشد
+          "id": msg['id'], 
           "client_temp_id": msg['client_temp_id'], 
-          "original_client_id": msg['original_client_id'], // <-- خواندن فیلد جدید
+          "original_client_id": msg['original_client_id'], 
           "sender_type": msg['sender_type'],
           "content": msg['content'],
           "created_at": msg['created_at'],
           "is_read": msg['is_read'] ?? true,
+          // --- دریافت فیلدهای جدید از سرور ---
+          "message_type": msg['message_type'] ?? 'text',
+          "file_url": msg['file_url'],
+          "reply_to_id": msg['reply_to_id'],
         }).toList();
       } else {
         throw Exception('Server error: ${response.statusCode}');
@@ -54,9 +58,12 @@ class ChatService {
           'user_id': message.conversationId, 
           'user_type': 'customer',
           'sender_type': 'customer',
-          // تغییر بسیار مهم: ارسال شناسه یکتا برای هر دو فیلد
           'client_temp_id': uniqueId, 
-          'original_client_id': uniqueId, // <-- ارسال فیلد جدید برای جلوگیری از تکرار
+          'original_client_id': uniqueId, 
+          // --- ارسال فیلدهای جدید به سمت سرور بک‌اند ---
+          'message_type': message.messageType,
+          'file_url': message.fileUrl,
+          'reply_to_id': message.replyToId,
         }),
         headers: {'Content-Type': 'application/json'},
       ).timeout(const Duration(seconds: 15)); 
@@ -77,4 +84,15 @@ class ChatService {
     }
     return {'success': false};
   }
+
+  Future<int> getUnreadCount(String userId, String userType) async {
+    final url = Uri.parse(ApiConstants.chatUnread(userType, userId));
+    final response = await http.get(url).timeout(const Duration(seconds: 15));
+    if (response.statusCode != 200) {
+      throw Exception('Server error: ${response.statusCode}');
+    }
+    final data = jsonDecode(utf8.decode(response.bodyBytes));
+    return int.tryParse('${data['unread_count']}') ?? 0;
+  }
+
 }

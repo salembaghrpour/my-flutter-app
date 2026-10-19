@@ -1,5 +1,5 @@
 // lib/services/local_db/chat_local_repository.dart
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import '../../models/local/chat_message_local.dart';
 
 class ChatLocalRepository {
@@ -20,24 +20,20 @@ class ChatLocalRepository {
     return id;
   }
 
-  // اضافه شدن پارامترهای limit و offset
   Future<List<ChatMessageLocal>> getMessagesByConversation(String conversationId, {int limit = 20, int offset = 0}) async {
     final box = await _getBox();
     var messages = box.values
         .where((msg) => msg.conversationId == conversationId)
         .toList();
         
-    // ابتدا مرتب‌سازی نزولی (جدیدترین به قدیمی‌ترین) برای اعمال صحیح صفحه‌بندی و اسکیپ کردن
     messages.sort((a, b) {
       DateTime dtA = DateTime.tryParse(a.createdAt) ?? DateTime.fromMillisecondsSinceEpoch(0);
       DateTime dtB = DateTime.tryParse(b.createdAt) ?? DateTime.fromMillisecondsSinceEpoch(0);
       return dtB.compareTo(dtA);
     });
 
-    // اعمال Pagination
     messages = messages.skip(offset).take(limit).toList();
 
-    // مرتب‌سازی مجدد به صورت صعودی (قدیمی‌ترین به جدیدترین) برای نمایش صحیح
     messages.sort((a, b) {
       DateTime dtA = DateTime.tryParse(a.createdAt) ?? DateTime.fromMillisecondsSinceEpoch(0);
       DateTime dtB = DateTime.tryParse(b.createdAt) ?? DateTime.fromMillisecondsSinceEpoch(0);
@@ -61,10 +57,7 @@ class ChatLocalRepository {
       await message.save();
     }
   }
-
-  // --- توابع جدید برای مدیریت تیک خوانده شدن ---
   
-  // وقتی ادمین پیام‌های مشتری را می‌خواند (تاییدیه از سرور)
   Future<void> markAllCustomerMessagesAsRead(String conversationId) async {
     final box = await _getBox();
     final messages = box.values.where((msg) => msg.conversationId == conversationId && msg.senderType == 'customer');
@@ -76,7 +69,6 @@ class ChatLocalRepository {
     }
   }
 
-  // وقتی مشتری پیام‌های ادمین را می‌خواند
   Future<void> markAdminMessagesAsRead(String conversationId) async {
     final box = await _getBox();
     final messages = box.values.where((msg) => msg.conversationId == conversationId && msg.senderType == 'admin');
@@ -92,4 +84,11 @@ class ChatLocalRepository {
     final box = await _getBox();
     await box.delete(localId);
   }
+
+  // متد جدید برای پاکسازی تمام پیام‌ها در هنگام خروج
+  Future<void> clearAllMessages() async {
+    final box = await _getBox();
+    await box.clear();
+  }
 }
+

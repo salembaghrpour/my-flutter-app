@@ -8,15 +8,30 @@ import 'package:drift/drift.dart' as drift;
 import 'cart_controller.dart';
 import '../constants/api_constants.dart';
 import '../services/connectivity_service.dart';
-import '../services/order_sync_service.dart'; // سرویس جدید اضافه شد
+import '../services/order_sync_service.dart';
 import '../core/local/db/app_database.dart';
+import '../models/cart/cart_line.dart'; // اضافه شده
 
 class OrderController extends GetxController {
   var isLoading = false.obs;
-  
+
   final CartController cartController = Get.find<CartController>();
   final ConnectivityService _connectivityService = Get.find<ConnectivityService>();
   final AppDatabase _localDb = AppDatabase.instance;
+
+  List<Map<String, dynamic>> _cartPayload() {
+    return cartController.toOrderItems(); // حالا از CartLine برمی‌گردد
+  }
+
+  String _serverError(http.Response response) {
+    try {
+      final body = json.decode(utf8.decode(response.bodyBytes));
+      if (body is Map && body['detail'] != null) {
+        return body['detail'].toString();
+      }
+    } catch (_) {}
+    return 'مشکل در ثبت سفارش در سرور (خطای ${response.statusCode})';
+  }
 
   Future<bool> submitOrder(String paymentMethod) async {
     if (cartController.cartItems.isEmpty) {
@@ -27,110 +42,100 @@ class OrderController extends GetxController {
     isLoading.value = true;
     try {
       final prefs = await SharedPreferences.getInstance();
-      String? realProfileId = prefs.getString('profileId') ?? prefs.getString('userId'); 
-      
+      final String? realProfileId = prefs.getString('profileId');
+
       if (realProfileId == null || realProfileId.isEmpty) {
         Get.snackbar('خطا', 'لطفا ابتدا وارد حساب کاربری خود شوید.');
         return false;
       }
 
-      // آماده‌سازی اقلام سفارش برای جلوگیری از تکرار کد
-      List<Map<String, dynamic>> items = cartController.cartItems.map((item) {
-        return {
-          "product_id": item['id'],
-          "quantity": item['quantity'],
-          "unit_price": double.tryParse(item['selling_price'].toString()) ?? 0.0,
-        };
-      }).toList();
+      final items = _cartPayload();
 
-      // ۱. اگر آفلاین هستیم، مستقیما در دیتابیس ذخیره کن و خارج شو
       if (!_connectivityService.isConnected.value) {
         return await _saveOrderLocally(realProfileId, paymentMethod, items);
       }
 
-      // ۲. در صورت آنلاین بودن، تلاش برای ارسال به سرور
-      Map<String, dynamic> requestBody = {
-        "profile_id": realProfileId,
-        "user_type": "customer",
-        "total_price": cartController.totalPrice,
-        "description": "ثبت از طریق اپلیکیشن موبایل",
-        "payment_method": paymentMethod,
-        "items": items
+      final requestBody = {
+        'profile_id': realProfileId,
+        'user_type': 'customer',
+        'description': 'ثبت از طریق اپلیکیشن موبایل',
+        'payment_method': paymentMethod,
+        'items': items,
       };
 
-      final url = Uri.parse('${ApiConstants.baseUrl}/api/orders/'); 
-      
-      final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: json.encode(requestBody),
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .post(
+            Uri.parse(ApiConstants.orders),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(requestBody),
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         cartController.clearCart();
-        Get.snackbar('موفق', 'سفارش شما با موفقیت در سرور ثبت شد');
-        
-        // در صورت موفقیت، اگر سفارش آفلاین قبلی وجود دارد آن را هم بفرست
+        String msg = 'سفارش شما با موفقیت در سرور ثبت شد';
+        try {
+          final data = json.decode(utf8.decode(response.bodyBytes));
+          final tracking = data['tracking_number'];
+          if (tracking != null) {
+            msg = 'سفارش ثبت شد. شماره پیگیری: $tracking';
+          }
+        } catch (_) {}
+        Get.snackbar('موفق', msg);
         _triggerSyncIfAvailable();
         return true;
-      } else {
-        Get.snackbar('خطا', 'مشکل در ثبت سفارش در سرور (خطای ${response.statusCode})');
-        return false; 
       }
 
+      Get.snackbar('خطا', _serverError(response));
+      return false;
     } catch (e) {
-      // ۳. اگر به هر دلیلی درخواست Fail شد -> ذخیره آفلاین
-      print("Network/Server Error: $e -> Fallback to Offline Mode");
-      
+      print('Network/Server Error: $e -> Fallback to Offline Mode');
       final prefs = await SharedPreferences.getInstance();
-      String? realProfileId = prefs.getString('profileId') ?? prefs.getString('userId');
-      
+      final realProfileId = prefs.getString('profileId');
       if (realProfileId != null) {
-        List<Map<String, dynamic>> items = cartController.cartItems.map((item) {
-          return {
-            "product_id": item['id'],
-            "quantity": item['quantity'],
-            "unit_price": double.tryParse(item['selling_price'].toString()) ?? 0.0,
-          };
-        }).toList();
-        
-        return await _saveOrderLocally(realProfileId, paymentMethod, items);
+        return await _saveOrderLocally(
+          realProfileId,
+          paymentMethod,
+          _cartPayload(),
+        );
       }
       return false;
-      
     } finally {
       isLoading.value = false;
     }
   }
 
-  // فرخوانی سرویس همگام‌سازی در صورت موجود بودن در حافظه برنامه
   void _triggerSyncIfAvailable() {
     if (Get.isRegistered<OrderSyncService>()) {
       Get.find<OrderSyncService>().syncOfflineOrders();
     }
   }
 
-  // ---- متد خصوصی برای ذخیره سفارش در دیتابیس (Drift) ----
-  Future<bool> _saveOrderLocally(String profileId, String paymentMethod, List<Map<String, dynamic>> items) async {
+  Future<bool> _saveOrderLocally(
+    String profileId,
+    String paymentMethod,
+    List<Map<String, dynamic>> items,
+  ) async {
     try {
       final orderCompanion = OfflineOrdersCompanion(
         profileId: drift.Value(profileId),
         totalPrice: drift.Value(cartController.totalPrice),
         paymentMethod: drift.Value(paymentMethod),
-        isSynced: const drift.Value(false), 
+        isSynced: const drift.Value(false),
       );
 
-      final itemsCompanion = items.map((item) => OfflineOrderItemsCompanion(
-        productId: drift.Value(item['product_id'] as int),
-        quantity: drift.Value(item['quantity'] as int),
-        unitPrice: drift.Value(item['unit_price'] as double),
-      )).toList();
+      final itemsCompanion = items
+          .map((item) => OfflineOrderItemsCompanion(
+                productId: drift.Value(item['product_id'] as int),
+                quantity: drift.Value((item['quantity'] as num).round()),
+                unitPrice: drift.Value((item['unit_price'] as num).toDouble()),
+              ))
+          .toList();
 
       await _localDb.saveOfflineOrder(orderCompanion, itemsCompanion);
-      
       cartController.clearCart();
       Get.snackbar(
-        'ثبت آفلاین', 
+        'ثبت آفلاین',
         'شما آفلاین هستید. سفارش در دستگاه ذخیره شد و پس از اتصال به اینترنت خودکار ارسال می‌شود.',
         duration: const Duration(seconds: 5),
       );
