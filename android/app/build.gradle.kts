@@ -10,7 +10,7 @@ plugins {
 android {
     namespace = "com.example.customer_app"
     // ارتقا به نسخه 35 برای پشتیبانی از پکیج نوتیفیکیشن و سایر پکیج‌های جدید
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
